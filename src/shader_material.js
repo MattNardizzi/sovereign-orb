@@ -3,9 +3,9 @@ import * as THREE from 'https://cdn.skypack.dev/three@0.152.2';
 export const orbMaterial = new THREE.ShaderMaterial({
   uniforms: {
     time: { value: 0.0 },
-    glowColor: { value: new THREE.Color('#90f1ff') },   // Emotion-linked
-    coreColor: { value: new THREE.Color('#111125') },   // Dark intelligence base
-    pulse: { value: 2.0 }                                // Mic + mood input
+    glowColor: { value: new THREE.Color('#90f1ff') },
+    coreColor: { value: new THREE.Color('#111125') },
+    pulse: { value: 2.0 }
   },
   vertexShader: `
     varying vec3 vNormal;
@@ -42,22 +42,13 @@ export const orbMaterial = new THREE.ShaderMaterial({
     }
 
     void main() {
-      // Respiration: rhythmic internal glow
       float breath = sin(time * 0.75 + vPos.y * 2.0) * 0.5 + 0.5;
 
-      // Center brightness boost
-      float centerGlow = 1.0 - length(vPos.xy) * 0.8;
+      float edgeGlow = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 3.0);
+      float shimmer = noise(vPos.xy * 6.0 + time * 0.25) * 0.05;
+      float core = 1.0 - length(vPos.xy) * 0.7;
 
-      // Angular light falloff (front-facing normal = bright)
-      float edgeGlow = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 2.0);
-
-      // Flickering shimmer from time-based noise
-      float shimmer = noise(vPos.xy * 5.0 + time * 0.3) * 0.1;
-
-      // Combined visible energy
-      float intensity = clamp((centerGlow + edgeGlow) * breath * pulse + shimmer, 0.0, 1.0);
-
-      // Final glow color
+      float intensity = clamp((edgeGlow + core) * breath * pulse + shimmer, 0.0, 1.0);
       vec3 color = mix(coreColor, glowColor, intensity);
 
       gl_FragColor = vec4(color, 1.0);
