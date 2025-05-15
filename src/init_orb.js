@@ -14,47 +14,51 @@ export function initOrb(containerId = 'orb-container') {
     return;
   }
 
-  // 🖥️ Renderer setup
+  // 🖥️ Renderer Setup
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(window.innerWidth, window.innerHeight);
   container.appendChild(renderer.domElement);
 
-  // 🌌 Scene and camera
+  // 🌌 Scene & Camera
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
   camera.position.z = 5;
 
-  // 🧠 Create Orb
+  // 🧠 Orb Creation
   const orbGeo = new THREE.SphereGeometry(2, 128, 128);
   orb = new THREE.Mesh(orbGeo, orbMaterial);
   scene.add(orb);
 
-  // ✅ Emotion engine → allow emotion syncing to begin
+  // 🌀 Emotion System Ready
   markShaderReady();
 
-  // 🎧 Mic audio input → pulse override
+  // 🎧 Audio Pulse Integration
   setupAudioInput(volume => {
-    const emotion = orbMaterial.uniforms.emotionState.value || 0.5;
-    orbMaterial.uniforms.pulse.value = 1.2 + volume * (0.5 + emotion);
+    const emotion = orbMaterial.uniforms.emotionState?.value || 0.5;
+    const pulse = 1.2 + volume * (0.4 + emotion);
+    orbMaterial.uniforms.pulse.value = Math.min(pulse, 2.0); // clamp to max
   });
 
-  // 🖱️ Enable mouse-based gaze tracking
+  // 🖱️ Gaze Awareness
   enableGazeTracking();
 
-  // 📐 Responsive resize
+  // 🔁 Window Resizing
   window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
   });
 
-  // 🌀 Animation loop
+  // 🧭 True Delta Clock
+  const clock = new THREE.Clock();
+
+  // 🔂 Sovereign Render Loop
   function loop() {
-    const delta = renderer.info.render.frame * 0.001 || 0.016;
-    updateEmotion(delta);          // decay + drift
-    updateOrbGaze(orb);            // rotate toward user
-    animateOrb(renderer, scene, camera, orb); // main visual driver
+    const delta = clock.getDelta();
+    updateEmotion(delta);              // Emotion decay & drift
+    updateOrbGaze(orb);                // Subtle gaze response
+    animateOrb(renderer, scene, camera, orb); // Visual rendering
     requestAnimationFrame(loop);
   }
 
