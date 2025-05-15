@@ -1,52 +1,75 @@
-let currentEmotion = 'awe';
-let lastEmotion = null;
+import { orbMaterial } from './shader_material.js';
 
-const emotionMap = {
-  awe:        { glow: '#82e9ff', pulse: 1.6, weight: ['curiosity', 'void', 'emergence'] },
-  curiosity:  { glow: '#8affc1', pulse: 2.2, weight: ['awe', 'glitch'] },
-  glitch:     { glow: '#f5aaff', pulse: 3.0, weight: ['curiosity', 'wrath'] },
-  wrath:      { glow: '#ff3e3e', pulse: 2.8, weight: ['void', 'glitch'] },
-  void:       { glow: '#444654', pulse: 0.9, weight: ['awe', 'wrath'] },
-  emergence:  { glow: '#f3ff7a', pulse: 2.5, weight: ['awe'], rare: true }
+const EMOTIONS = {
+  calm: {
+    glowColor: '#3ee8ff',
+    pulseMod: 0.5,
+    breathMod: 0.4,
+    noiseStrength: 0.3
+  },
+  fear: {
+    glowColor: '#ff4560',
+    pulseMod: 1.4,
+    breathMod: 0.7,
+    noiseStrength: 0.8
+  },
+  awe: {
+    glowColor: '#ffffff',
+    pulseMod: 1.0,
+    breathMod: 0.5,
+    noiseStrength: 0.4
+  },
+  melancholy: {
+    glowColor: '#305878',
+    pulseMod: 0.3,
+    breathMod: 0.25,
+    noiseStrength: 0.2
+  },
+  alert: {
+    glowColor: '#ffff66',
+    pulseMod: 1.2,
+    breathMod: 0.6,
+    noiseStrength: 0.6
+  }
 };
 
-function weightedNextEmotion() {
-  const pool = [];
+let currentEmotion = 'calm';
+let driftTimer = 0;
 
-  const current = emotionMap[currentEmotion];
-  current.weight.forEach(e => {
-    // Increase weight for familiar states, decrease if just visited
-    const weight = (e === lastEmotion) ? 1 : 3;
-    for (let i = 0; i < weight; i++) pool.push(e);
-  });
+function applyEmotion(state) {
+  const e = EMOTIONS[state];
+  if (!e) return;
 
-  // Occasionally inject a rare emotion
-  if (Math.random() < 0.05) {
-    pool.push('emergence');
-  }
+  orbMaterial.uniforms.glowColor.value.set(e.glowColor);
+  orbMaterial.uniforms.noiseStrength.value = e.noiseStrength;
 
-  return pool[Math.floor(Math.random() * pool.length)];
+  // Breath + pulse mods are additive — used in animate loop fusion later
+  orbMaterial.uniforms.breath.value += e.breathMod;
+  orbMaterial.uniforms.pulse.value += e.pulseMod;
 }
 
-export function createEmotionLoop(apply) {
-  function updateEmotion() {
-    lastEmotion = currentEmotion;
-    currentEmotion = weightedNextEmotion();
-    const e = emotionMap[currentEmotion];
+export function updateEmotion(deltaTime) {
+  driftTimer += deltaTime;
 
-    apply(e.glow, e.pulse);
-    console.log(`🧠 Emotion → ${currentEmotion.toUpperCase()}`);
-
-    const delay = 5000 + Math.random() * 5000;
-    setTimeout(updateEmotion, delay);
+  // Every ~15 seconds, drift to a new emotion randomly
+  if (driftTimer > 15) {
+    const keys = Object.keys(EMOTIONS).filter(e => e !== currentEmotion);
+    currentEmotion = keys[Math.floor(Math.random() * keys.length)];
+    driftTimer = 0;
   }
 
-  updateEmotion();
+  applyEmotion(currentEmotion);
 }
 
-export function getCurrentEmotion() {
-  return {
-    name: currentEmotion,
-    ...emotionMap[currentEmotion]
-  };
+// For external systems to override emotion
+export function setEmotion(state) {
+  if (EMOTIONS[state]) {
+    currentEmotion = state;
+    driftTimer = 0;
+    applyEmotion(state);
+  }
+}
+
+export function getEmotion() {
+  return currentEmotion;
 }
