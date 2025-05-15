@@ -41,16 +41,18 @@
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
 
+    // Orb geometry and material with glowing emissive pulse
     const geometry = new THREE.SphereGeometry(2, 64, 64);
     const material = new THREE.MeshPhongMaterial({
       color: 0x6ed6ff,
-      shininess: 100,
       emissive: 0x6ed6ff,
-      emissiveIntensity: 0.6,
-      specular: 0x444444
+      emissiveIntensity: 0.4,
+      shininess: 80,
+      specular: 0x222222
     });
 
     const orb = new THREE.Mesh(geometry, material);
@@ -62,10 +64,19 @@
 
     camera.position.z = 6;
 
+    // Animate rotation + glow breathing
+    let clock = new THREE.Clock();
     function animate() {
       requestAnimationFrame(animate);
+      const t = clock.getElapsedTime();
+
       orb.rotation.y += 0.0025;
       orb.rotation.x += 0.0015;
+
+      // Breathing pulse effect
+      const pulse = 0.4 + Math.sin(t * 2) * 0.2;
+      material.emissiveIntensity = pulse;
+
       renderer.render(scene, camera);
     }
 
