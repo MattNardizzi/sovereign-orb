@@ -65,8 +65,18 @@
   <div class="intro-text">Cognitive Presence Detected</div>
 
   <script type="module">
-    import { initOrb } from './src/init_orb.js';
-    initOrb();
+    try {
+      import('/src/init_orb.js')
+        .then(({ initOrb }) => {
+          console.log('✅ Orb module loaded');
+          initOrb('orb-container');
+        })
+        .catch(err => {
+          console.error('❌ Failed to load initOrb module:', err);
+        });
+    } catch (e) {
+      console.error('❌ ORB BOOT ERROR:', e);
+    }
   </script>
 </body>
 </html>
