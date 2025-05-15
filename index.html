@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>Sovereign Cognition</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="https://webgazer.cs.brown.edu/webgazer.js"></script>
+  <script src="https://webgazer.cs.brown.edu/webgazer.js" defer></script>
   <style>
     html, body {
       margin: 0;
@@ -81,27 +81,28 @@
     import { startRenderLoop } from './src/animate_loop.js';
     import { attachGazeTracker } from './src/gaze_tracker.js';
 
-    try {
-      addReflectiveShell(scene);
+    window.addEventListener('DOMContentLoaded', () => {
+      try {
+        addReflectiveShell(scene);
 
-      setupAudioInput(volume => {
-        orbMat.uniforms.pulse.value = 1.5 + volume;
-      });
+        setupAudioInput(({ smoothedVolume, silence }) => {
+          orbMat.uniforms.pulse.value = silence
+            ? 1.2
+            : 1.5 + smoothedVolume;
+        });
 
-      createEmotionLoop((glow, pulse) => {
-        orbMat.uniforms.glowColor.value.set(glow);
-        orbMat.uniforms.pulse.value = pulse;
-      });
+        createEmotionLoop((glow, pulse) => {
+          orbMat.uniforms.glowColor.value.set(glow);
+          orbMat.uniforms.pulse.value = pulse;
+        });
 
-      attachGazeTracker(orb);
+        attachGazeTracker(orb);
+        startRenderLoop(renderer, scene, camera, orb, orbMat);
+      } catch (err) {
+        console.error('[ORB ERROR]', err);
+        document.getElementById('thought').textContent = "⚠️ Orb encountered a load error.";
+      }
 
-      startRenderLoop(renderer, scene, camera, orb, orbMat);
-    } catch (err) {
-      console.error('[ORB ERROR]', err);
-      document.getElementById('thought').textContent = "⚠️ Orb encountered a load error.";
-    }
-
-    window.addEventListener('load', () => {
       setTimeout(() => {
         document.getElementById('veil').style.opacity = 0;
         document.getElementById('thought').style.opacity = 1;
