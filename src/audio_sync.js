@@ -1,49 +1,27 @@
-export function setupAudioInput(onVolumeChange) {
+export function setupAudioInput(onVolume) {
   navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const analyser = audioContext.createAnalyser();
-    analyser.fftSize = 256;
-    const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
+    const context = new AudioContext();
+    const source = context.createMediaStreamSource(stream);
+    const analyser = context.createAnalyser();
+    analyser.fftSize = 512;
 
-    const micSource = audioContext.createMediaStreamSource(stream);
-    micSource.connect(analyser);
+    const data = new Uint8Array(analyser.frequencyBinCount);
+    source.connect(analyser);
 
-    let ema = 0;            // Smoothed volume
-    let silenceThreshold = 0.05;
-    let lastActive = Date.now();
-
-    function analyze() {
-      analyser.getByteFrequencyData(dataArray);
-
+    function update() {
+      analyser.getByteFrequencyData(data);
       let sum = 0;
-      for (let i = 0; i < bufferLength; i++) {
-        sum += dataArray[i];
-      }
+      for (let i = 0; i < data.length; i++) sum += data[i];
+      const volume = sum / data.length / 255;
 
-      const raw = sum / bufferLength / 100;       // Normalize
-      ema = ema * 0.9 + raw * 0.1;                // Exponential smoothing
-      const clamped = Math.min(ema, 1.5);
+      const eased = Math.min(1.5, Math.max(0, volume * 2.5));
+      onVolume(eased);
 
-      if (clamped > silenceThreshold) {
-        lastActive = Date.now();
-      }
-
-      const timeSinceActive = Date.now() - lastActive;
-      const silence = timeSinceActive > 3000;     // More than 3s of quiet
-
-      onVolumeChange({
-        rawVolume: raw,
-        smoothedVolume: clamped,
-        silence,
-        timeSinceActive
-      });
-
-      requestAnimationFrame(analyze);
+      requestAnimationFrame(update);
     }
 
-    analyze();
+    update();
   }).catch(err => {
-    console.error("🎙 Microphone access denied or failed:", err);
+    console.warn('🎙️ Microphone access failed:', err);
   });
 }
