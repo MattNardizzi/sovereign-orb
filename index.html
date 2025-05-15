@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tex Orb</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #000;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    #orb {
+      width: 100vw;
+      height: 100vh;
+      display: block;
+    }
+
+    #thought {
+      position: absolute;
+      bottom: 5%;
+      width: 100%;
+      text-align: center;
+      font-size: 1.4rem;
+      color: #cfdcff;
+      text-shadow: 0 0 10px #6ed6ff;
+      font-family: 'Inter', sans-serif;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="orb"></canvas>
+  <div id="thought">Initializing Tex's cognition...</div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    const canvas = document.getElementById('orb');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+
+    const geometry = new THREE.SphereGeometry(2, 64, 64);
+    const material = new THREE.MeshPhongMaterial({
+      color: 0x6ed6ff,
+      shininess: 100,
+      emissive: 0x6ed6ff,
+      emissiveIntensity: 0.6,
+      specular: 0x444444
+    });
+
+    const orb = new THREE.Mesh(geometry, material);
+    scene.add(orb);
+
+    const light = new THREE.PointLight(0xffffff, 1);
+    light.position.set(5, 5, 5);
+    scene.add(light);
+
+    camera.position.z = 6;
+
+    function animate() {
+      requestAnimationFrame(animate);
+      orb.rotation.y += 0.0025;
+      orb.rotation.x += 0.0015;
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
