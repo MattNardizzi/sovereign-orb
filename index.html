@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Tex Orb</title>
+  <title>Sovereign Cognition</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
+
   <style>
     html, body {
       margin: 0;
@@ -10,105 +13,75 @@
       background: #000;
       height: 100%;
       overflow: hidden;
+      font-family: 'Inter', sans-serif;
     }
 
     #orb {
       width: 100vw;
       height: 100vh;
       display: block;
-      transition: box-shadow 0.3s ease, transform 0.2s ease;
+      transition: box-shadow 0.35s ease, transform 0.3s ease;
     }
 
     #thought {
       position: absolute;
-      bottom: 5%;
+      bottom: 4%;
       width: 100%;
       text-align: center;
-      font-size: 1.4rem;
+      font-size: 1.3rem;
       color: #cfdcff;
       text-shadow: 0 0 12px #6ed6ff88;
-      font-family: 'Inter', sans-serif;
+      letter-spacing: 0.02em;
+      opacity: 0.9;
       z-index: 10;
+      transition: all 0.3s ease;
+    }
+
+    #voice-status {
+      position: absolute;
+      top: 4%;
+      right: 5%;
+      font-size: 0.9rem;
+      color: #6ed6ff88;
+      text-shadow: 0 0 6px #5ecaff55;
+      z-index: 11;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    #voice-status.active {
+      opacity: 1;
     }
   </style>
 </head>
 <body>
   <canvas id="orb"></canvas>
-  <div id="thought">Initializing Tex's cognition...</div>
+  <div id="thought">Tex is stabilizing...</div>
+  <div id="voice-status">🎙 Listening...</div>
 
   <!-- Core libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
-  <!-- Orb rendering logic -->
-  <script>
-    const canvas = document.getElementById('orb');
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  <!-- Orb rendering (3D presence) -->
+  <script src="engine/script.js"></script>
 
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
-
-    const geometry = new THREE.SphereGeometry(2, 128, 128);
-
-    const material = new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color(0x6ed6ff),
-      emissive: new THREE.Color(0x6ed6ff),
-      emissiveIntensity: 0.3,
-      transmission: 0.6,
-      thickness: 0.9,
-      roughness: 0.2,
-      metalness: 0.1,
-      clearcoat: 0.6,
-      clearcoatRoughness: 0.1
-    });
-
-    const orb = new THREE.Mesh(geometry, material);
-    scene.add(orb);
-
-    const light1 = new THREE.PointLight(0x6ed6ff, 0.8);
-    light1.position.set(5, 5, 5);
-    scene.add(light1);
-
-    const light2 = new THREE.PointLight(0x115577, 0.4);
-    light2.position.set(-3, -4, -2);
-    scene.add(light2);
-
-    camera.position.z = 6;
-    const clock = new THREE.Clock();
-
-    function animate() {
-      requestAnimationFrame(animate);
-      const t = clock.getElapsedTime();
-
-      orb.rotation.y += 0.001 + Math.sin(t * 0.25) * 0.0005;
-      orb.rotation.x += 0.0006 + Math.cos(t * 0.33) * 0.0003;
-
-      const pulse = 0.35 + Math.sin(t * 1.7 + Math.sin(t * 0.5)) * 0.25;
-      material.emissiveIntensity = pulse;
-
-      material.roughness = 0.1 + Math.abs(Math.sin(t * 2.5)) * 0.1;
-
-      renderer.render(scene, camera);
-    }
-
-    animate();
-
-    window.addEventListener("resize", () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-  </script>
-
-  <!-- 🧠 Cognition Engine -->
-  <script src="script.js"></script>
-
-  <!-- 👁 Gaze Tracking -->
+  <!-- Gaze detection -->
   <script src="https://webgazer.cs.brown.edu/webgazer.js"></script>
-  <script src="gaze_tracker.js"></script>
+  <script src="engine/gaze_tracker.js"></script>
 
-  <!-- 🎙 Voice Sync Glow -->
-  <script src="audio_sync.js"></script>
+  <!-- Voice glow response -->
+  <script src="engine/audio_sync.js"></script>
+
+  <!-- Tex TTS voice playback -->
+  <script src="engine/tts_player.js"></script>
+
+  <!-- Emotional drift + surprise behavior -->
+  <script src="engine/memory_mutator.js"></script>
+
+  <!-- Optional: facial emotion mirroring -->
+  <script src="engine/facial_sync.js"></script>
+
+  <!-- Unreal stream loader (activated later) -->
+  <!-- <iframe src="unreal_orb_stream/ue_orb.html" style="display:none;"></iframe> -->
 </body>
 </html>
