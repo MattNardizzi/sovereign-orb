@@ -25,7 +25,7 @@
       text-align: center;
       font-size: 1.4rem;
       color: #cfdcff;
-      text-shadow: 0 0 12px #6ed6ff88;
+      text-shadow: 0 0 10px #6ed6ff;
       font-family: 'Inter', sans-serif;
       z-index: 10;
     }
@@ -39,58 +39,43 @@
   <script>
     const canvas = document.getElementById('orb');
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
 
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
 
-    // Geometry
-    const geometry = new THREE.SphereGeometry(2, 128, 128);
-
-    // Material: translucent layered depth
-    const material = new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color(0x6ed6ff),
-      emissive: new THREE.Color(0x6ed6ff),
-      emissiveIntensity: 0.3,
-      transmission: 0.6, // fake inner glow
-      thickness: 0.9,
-      roughness: 0.2,
-      metalness: 0.1,
-      clearcoat: 0.6,
-      clearcoatRoughness: 0.1
+    // Orb geometry and material with glowing emissive pulse
+    const geometry = new THREE.SphereGeometry(2, 64, 64);
+    const material = new THREE.MeshPhongMaterial({
+      color: 0x6ed6ff,
+      emissive: 0x6ed6ff,
+      emissiveIntensity: 0.4,
+      shininess: 80,
+      specular: 0x222222
     });
 
     const orb = new THREE.Mesh(geometry, material);
     scene.add(orb);
 
-    // Lighting
-    const light1 = new THREE.PointLight(0x6ed6ff, 0.8);
-    light1.position.set(5, 5, 5);
-    scene.add(light1);
-
-    const light2 = new THREE.PointLight(0x115577, 0.4);
-    light2.position.set(-3, -4, -2);
-    scene.add(light2);
+    const light = new THREE.PointLight(0xffffff, 1);
+    light.position.set(5, 5, 5);
+    scene.add(light);
 
     camera.position.z = 6;
 
+    // Animate rotation + glow breathing
     let clock = new THREE.Clock();
-
     function animate() {
       requestAnimationFrame(animate);
       const t = clock.getElapsedTime();
 
-      // Rotational drift
-      orb.rotation.y += 0.001 + Math.sin(t * 0.25) * 0.0005;
-      orb.rotation.x += 0.0006 + Math.cos(t * 0.33) * 0.0003;
+      orb.rotation.y += 0.0025;
+      orb.rotation.x += 0.0015;
 
-      // Glow breathing — more organic
-      const pulse = 0.35 + Math.sin(t * 1.7 + Math.sin(t * 0.5)) * 0.25;
+      // Breathing pulse effect
+      const pulse = 0.4 + Math.sin(t * 2) * 0.2;
       material.emissiveIntensity = pulse;
-
-      // Shimmer via roughness flicker
-      material.roughness = 0.1 + Math.abs(Math.sin(t * 2.5)) * 0.1;
 
       renderer.render(scene, camera);
     }
