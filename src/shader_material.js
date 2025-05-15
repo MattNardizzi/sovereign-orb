@@ -3,34 +3,38 @@ import * as THREE from 'https://cdn.skypack.dev/three@0.152.2';
 export const orbMaterial = new THREE.ShaderMaterial({
   uniforms: {
     time: { value: 0.0 },
-    glowColor: { value: new THREE.Color('#3ee8ff') },
-    coreColor: { value: new THREE.Color('#12131b') },
-    pulse: { value: 1.0 },
-    breath: { value: 0.0 }
+    glowColor: { value: new THREE.Color('#90f1ff') },
+    coreColor: { value: new THREE.Color('#111125') },
+    pulse: { value: 2.0 }
   },
   vertexShader: `
+    uniform float time;
     varying vec3 vNormal;
+    varying vec3 vPos;
     void main() {
       vNormal = normalize(normalMatrix * normal);
+      vPos = position;
       gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
     }
   `,
   fragmentShader: `
-    precision highp float;
-
     uniform float time;
-    uniform float pulse;
-    uniform float breath;
     uniform vec3 glowColor;
     uniform vec3 coreColor;
-
+    uniform float pulse;
     varying vec3 vNormal;
+    varying vec3 vPos;
+
+    float noise(vec2 p) {
+      return fract(sin(dot(p, vec2(12.9898,78.233))) * 43758.5453);
+    }
 
     void main() {
-      float angle = dot(vNormal, vec3(0.0, 0.0, 1.0));
-      float intensity = pow(1.0 - angle, 2.0);
-      float breathGlow = 0.3 + 0.3 * sin(time * 1.5 + breath * 6.2831);
-      vec3 color = mix(coreColor, glowColor, intensity + breathGlow);
+      float breathing = sin(time * 0.75 + vPos.y * 1.5) * 0.5 + 0.5;
+      float angle = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 3.0);
+      float shimmer = noise(vPos.xy + time * 0.03) * 0.05;
+      float intensity = clamp(angle * breathing * pulse + shimmer, 0.0, 1.0);
+      vec3 color = mix(coreColor, glowColor, intensity);
       gl_FragColor = vec4(color, 1.0);
     }
   `,
