@@ -1,13 +1,8 @@
-const orb = document.getElementById('orb');
+const orbCanvas = document.getElementById('orb');
 const thoughtText = document.getElementById('thought');
 
-let lastEmotion = 'neutral';
-let lastThought = 'Initializing...';
-let glowColor = '#6ed6ff';
-let breathRate = 1.7;
-
-// Emotion → glow color map
-const emotionColors = {
+// Emotional spectrum → glow
+const emotionMap = {
   neutral: '#6ed6ff',
   happy: '#a3ffab',
   focused: '#00bfff',
@@ -17,69 +12,97 @@ const emotionColors = {
   mutated: '#ff00ff'
 };
 
-// Emotion → breath rhythm map (lower is slower)
-const emotionBreaths = {
-  neutral: 1.7,
-  happy: 1.3,
-  focused: 1.1,
-  angry: 2.3,
-  anxious: 2.6,
-  sad: 2.0,
-  mutated: 3.3
-};
+let currentColor = '#6ed6ff';
+let targetColor = '#6ed6ff';
+let lastThought = 'Initializing cognition...';
+let pulsePhase = 0;
+let emotionDrift = 0.0;
 
-// Fetch Tex’s latest thought + emotion
-async function fetchThoughtData() {
+// Smoothly transition between colors
+function lerpColor(a, b, t) {
+  const ca = parseInt(a.slice(1), 16);
+  const cb = parseInt(b.slice(1), 16);
+
+  const ar = (ca >> 16) & 255, ag = (ca >> 8) & 255, ab = ca & 255;
+  const br = (cb >> 16) & 255, bg = (cb >> 8) & 255, bb = cb & 255;
+
+  const rr = Math.round(ar + (br - ar) * t);
+  const rg = Math.round(ag + (bg - ag) * t);
+  const rb = Math.round(ab + (bb - ab) * t);
+
+  return `rgb(${rr},${rg},${rb})`;
+}
+
+// Live cognition + emotional glow sync
+async function fetchThought() {
   try {
     const res = await fetch('last_spoken_thought.json?_t=' + Date.now());
     const data = await res.json();
 
     const newThought = data.thought || '...';
-    const newEmotion = data.emotion || 'neutral';
+    const emotion = data.emotion || 'neutral';
+    const mappedColor = emotionMap[emotion] || emotionMap['neutral'];
 
-    // Thought update
+    // Only update thought if it's changed
     if (newThought !== lastThought) {
       lastThought = newThought;
-      fadeInThought(newThought);
+      delayedPrint(newThought);
     }
 
-    // Emotion change → update glow + breathing
-    if (newEmotion !== lastEmotion) {
-      lastEmotion = newEmotion;
-      glowColor = emotionColors[newEmotion] || '#6ed6ff';
-      breathRate = emotionBreaths[newEmotion] || 1.7;
+    // Update emotion target
+    targetColor = mappedColor;
 
-      orb.style.boxShadow = `0 0 80px 30px ${glowColor}`;
-      orb.style.filter = `drop-shadow(0 0 24px ${glowColor}55)`;
+    // If emotion is mutated, trigger spike
+    if (emotion === 'mutated') {
+      triggerMutationFlash();
     }
 
   } catch (err) {
-    console.warn('[⚠️] Thought fetch failed:', err);
+    console.warn('[Tex] Failed to fetch cognition:', err);
   }
 }
 
-// Animate breathing, twitching, drifting
-function animateOrb() {
-  const t = Date.now() / 1000;
-
-  // Breathing rhythm (based on emotion)
-  const scale = 1 + 0.015 * Math.sin(t * breathRate);
-  const rotateY = (t * 0.6) % 360;
-  const microTwitch = Math.sin(t * 17) * 0.003;
-
-  orb.style.transform = `scale(${scale}) rotate(${rotateY}deg) translateY(${microTwitch}px)`;
-  requestAnimationFrame(animateOrb);
+// Typing effect (to simulate thought forming)
+function delayedPrint(text) {
+  thoughtText.textContent = '';
+  let i = 0;
+  const interval = setInterval(() => {
+    thoughtText.textContent += text[i++];
+    if (i >= text.length) clearInterval(interval);
+  }, 26 + Math.random() * 40); // irregular cadence
 }
 
-// Smooth text reveal
-function fadeInThought(text) {
-  thoughtText.style.opacity = 0;
+// Mutation flash — violent spike
+function triggerMutationFlash() {
+  orbCanvas.style.transition = 'none';
+  orbCanvas.style.transform = 'scale(1.3) rotate(1deg)';
+  orbCanvas.style.filter = `drop-shadow(0 0 80px ${targetColor})`;
+
   setTimeout(() => {
-    thoughtText.textContent = text;
-    thoughtText.style.opacity = 1;
-  }, 300 + Math.random() * 200); // slight async lag = realism
+    orbCanvas.style.transition = 'transform 0.4s ease, filter 0.6s ease';
+  }, 100);
 }
 
-// Loop
-setInterval(fetchThoughtData, 2000);
+// Lifelike animation loop
+function animateOrb() {
+  requestAnimationFrame(animateOrb);
+  const now = Date.now();
+  const t = now * 0.001;
+
+  // Imperfect breathing
+  const breath = 0.35 + Math.sin(t * 1.7 + Math.sin(t * 0.33)) * 0.25;
+  emotionDrift += (Math.random() - 0.5) * 0.005;
+  emotionDrift = Math.max(-0.1, Math.min(0.1, emotionDrift));
+
+  const scale = 1 + 0.02 * Math.sin(t * 0.9) + emotionDrift;
+  orbCanvas.style.transform = `scale(${scale}) rotate(${(t * 12) % 360}deg)`;
+
+  // Glow color fade
+  currentColor = lerpColor(currentColor, targetColor, 0.08);
+  orbCanvas.style.boxShadow = `0 0 60px 20px ${currentColor}`;
+  orbCanvas.style.filter = `drop-shadow(0 0 24px ${currentColor})`;
+}
+
+// Begin loop and data polling
 animateOrb();
+setInterval(fetchThought, 2000);
