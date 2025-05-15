@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>Sovereign Cognition</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://webgazer.cs.brown.edu/webgazer.js"></script>
   <style>
     html, body {
       margin: 0;
@@ -73,126 +74,25 @@
   <div id="thought">...</div>
 
   <script type="module">
-    import * as THREE from 'https://cdn.skypack.dev/three@0.152.2';
-    import { setupAudioInput } from './audio_sync.js';
-    import { createEmotionLoop } from './emotion_engine.js';
+    import { scene, camera, renderer, orb, orbMat } from './src/init_orb.js';
+    import { setupAudioInput } from './src/audio_sync.js';
+    import { createEmotionLoop } from './src/emotion_engine.js';
+    import { addReflectiveShell } from './src/shell_layer.js';
+    import { startRenderLoop } from './src/animate_loop.js';
+    import { attachGazeTracker } from './src/gaze_tracker.js';
 
-    const canvas = document.getElementById('orb');
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 5;
-
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
-
-    const orbGeo = new THREE.SphereGeometry(2, 128, 128);
-    const orbMat = new THREE.ShaderMaterial({
-      uniforms: {
-        time: { value: 0.0 },
-        glowColor: { value: new THREE.Color('#90f1ff') },
-        coreColor: { value: new THREE.Color('#111125') },
-        pulse: { value: 2.0 }
-      },
-      vertexShader: `
-        uniform float time;
-        varying vec3 vNormal;
-        varying vec3 vPos;
-        void main() {
-          vNormal = normalize(normalMatrix * normal);
-          vPos = position;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        uniform float time;
-        uniform vec3 glowColor;
-        uniform vec3 coreColor;
-        uniform float pulse;
-        varying vec3 vNormal;
-        varying vec3 vPos;
-
-        float hash(vec2 p) {
-          return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
-        }
-
-        float noise(vec2 p) {
-          vec2 i = floor(p);
-          vec2 f = fract(p);
-          float a = hash(i);
-          float b = hash(i + vec2(1.0, 0.0));
-          float c = hash(i + vec2(0.0, 1.0));
-          float d = hash(i + vec2(1.0, 1.0));
-          vec2 u = f * f * (3.0 - 2.0 * f);
-          return mix(a, b, u.x) +
-                 (c - a)* u.y * (1.0 - u.x) +
-                 (d - b) * u.x * u.y;
-        }
-
-        void main() {
-          float breathing = sin(time * 0.75 + vPos.y * 1.5) * 0.5 + 0.5;
-          float angle = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 3.0);
-          float shimmer = noise(vPos.xy * 4.0 + time * 0.5) * 0.1;
-
-          float intensity = clamp(angle * breathing * pulse + shimmer, 0.0, 1.0);
-          vec3 color = mix(coreColor, glowColor, intensity);
-
-          gl_FragColor = vec4(color, 1.0);
-        }
-      `
-    });
-
-    const orb = new THREE.Mesh(orbGeo, orbMat);
-    scene.add(orb);
-
-    // 🪞 Reflective glass shell
-    const shellGeo = new THREE.SphereGeometry(2.03, 128, 128);
-    const shellMat = new THREE.MeshPhysicalMaterial({
-      transparent: true,
-      opacity: 0.15,
-      roughness: 0.05,
-      metalness: 0.8,
-      clearcoat: 1,
-      clearcoatRoughness: 0.1,
-      transmission: 1.0,
-      reflectivity: 1.0,
-      thickness: 0.6
-    });
-    const shell = new THREE.Mesh(shellGeo, shellMat);
-    scene.add(shell);
-
-    // 🎙️ Mic-driven breathing
+    addReflectiveShell(scene);
     setupAudioInput(volume => {
       orbMat.uniforms.pulse.value = 1.5 + volume;
     });
 
-    // 🧠 Emotional state drift
     createEmotionLoop((glow, pulse) => {
       orbMat.uniforms.glowColor.value.set(glow);
       orbMat.uniforms.pulse.value = pulse;
     });
 
-    let drift = 0;
-    function animate(t) {
-      const time = t * 0.001;
-      orbMat.uniforms.time.value = time;
-
-      drift += 0.002;
-      orb.rotation.x = Math.sin(time * 0.3) * 0.12 + Math.sin(drift) * 0.03;
-      orb.rotation.y = time * 0.4 + Math.sin(drift * 0.6) * 0.07;
-      orb.rotation.z = Math.cos(time * 0.2) * 0.015;
-
-      renderer.render(scene, camera);
-      requestAnimationFrame(animate);
-    }
-
-    animate();
-
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    });
+    attachGazeTracker(orb);
+    startRenderLoop(renderer, scene, camera, orb, orbMat);
 
     window.addEventListener('load', () => {
       setTimeout(() => {
