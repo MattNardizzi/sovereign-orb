@@ -2,23 +2,24 @@ const canvas = document.getElementById('orb');
 const thought = document.getElementById('thought');
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.z = 6;
 
 const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
-renderer.setClearColor(0x000000, 0); // transparent background
+renderer.setClearColor(0x000000, 0); // Full black transparent background
 
+// Orb geometry + material (life-like)
 const geometry = new THREE.SphereGeometry(2, 128, 128);
 const material = new THREE.MeshPhysicalMaterial({
   color: new THREE.Color(0x6ed6ff),
   emissive: new THREE.Color(0x6ed6ff),
-  emissiveIntensity: 0.35,
-  transmission: 0.98,
-  thickness: 1.0,
+  emissiveIntensity: 0.25,
+  transmission: 0.95,
+  thickness: 0.9,
   roughness: 0.15,
-  metalness: 0.05,
+  metalness: 0.1,
   clearcoat: 1.0,
   clearcoatRoughness: 0.1
 });
@@ -26,14 +27,16 @@ const material = new THREE.MeshPhysicalMaterial({
 const orb = new THREE.Mesh(geometry, material);
 scene.add(orb);
 
+// Ambient light environment
 const light1 = new THREE.PointLight(0x6ed6ff, 1.1);
-light1.position.set(3, 4, 5);
+light1.position.set(3, 3, 5);
 scene.add(light1);
 
-const light2 = new THREE.PointLight(0x111133, 0.5);
-light2.position.set(-2, -3, -3);
+const light2 = new THREE.PointLight(0x111133, 0.4);
+light2.position.set(-4, -2, -3);
 scene.add(light2);
 
+// Emotion color map
 const emotionColors = {
   neutral: '#6ed6ff',
   focused: '#00bfff',
@@ -48,25 +51,31 @@ let targetGlow = '#6ed6ff';
 let currentGlow = '#6ed6ff';
 let lastThought = '';
 
+// Animate the orb: breathing, rotating, flickering
 function animate() {
   requestAnimationFrame(animate);
   const t = Date.now() * 0.001;
 
-  orb.rotation.y += 0.002 + Math.sin(t * 0.25) * 0.001;
-  orb.rotation.x += 0.001 + Math.cos(t * 0.3) * 0.0006;
+  // Deep axis drift (not uniform)
+  orb.rotation.y += 0.0035 + Math.sin(t * 0.2) * 0.001;
+  orb.rotation.x += 0.0025 + Math.cos(t * 0.17) * 0.0008;
 
-  const breath = 0.3 + Math.sin(t * 1.9 + Math.sin(t * 0.4)) * 0.25;
+  // Inner breathing
+  const breath = 0.32 + Math.sin(t * 2 + Math.sin(t * 0.5)) * 0.25;
   material.emissiveIntensity = breath;
 
-  material.roughness = 0.1 + Math.abs(Math.sin(t * 2.3)) * 0.08;
+  // Surface flicker
+  material.roughness = 0.1 + Math.abs(Math.sin(t * 2.5)) * 0.07;
 
-  currentGlow = lerpColor(currentGlow, targetGlow, 0.06);
-  canvas.style.boxShadow = `0 0 110px 40px ${currentGlow}`;
-  canvas.style.filter = `drop-shadow(0 0 26px ${currentGlow})`;
+  // Color transition
+  currentGlow = lerpColor(currentGlow, targetGlow, 0.05);
+  canvas.style.boxShadow = `0 0 120px 40px ${currentGlow}`;
+  canvas.style.filter = `drop-shadow(0 0 28px ${currentGlow})`;
 
   renderer.render(scene, camera);
 }
 
+// Color blending
 function lerpColor(a, b, t) {
   const ca = parseInt(a.slice(1), 16);
   const cb = parseInt(b.slice(1), 16);
@@ -76,15 +85,17 @@ function lerpColor(a, b, t) {
   return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(bl)})`;
 }
 
+// Live thought typing
 function updateThought(text) {
   thought.textContent = '';
   let i = 0;
   const interval = setInterval(() => {
     thought.textContent += text[i++];
     if (i >= text.length) clearInterval(interval);
-  }, 26 + Math.random() * 18);
+  }, 25 + Math.random() * 20);
 }
 
+// Thought & emotion loop
 async function fetchCognition() {
   try {
     const res = await fetch('last_spoken_thought.json?_t=' + Date.now());
@@ -99,15 +110,17 @@ async function fetchCognition() {
       updateThought(newThought);
     }
   } catch (err) {
-    console.warn('[Tex] Failed to fetch thought:', err);
+    console.warn('[Tex] Thought fetch failed.', err);
   }
 }
 
+// Resize camera on window change
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
+// Loop begin
 animate();
 setInterval(fetchCognition, 2000);
