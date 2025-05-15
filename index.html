@@ -2,114 +2,71 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Sovereign Cognition</title>
+  <title>Tex — Sovereign Cognition</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="https://webgazer.cs.brown.edu/webgazer.js" defer></script>
+
   <style>
     html, body {
       margin: 0;
       padding: 0;
       background: #000;
-      height: 100%;
       overflow: hidden;
+      height: 100%;
       font-family: 'Inter', sans-serif;
+      color: #cfdcff;
     }
 
-    canvas {
-      display: block;
+    #orb-container {
       position: absolute;
       top: 0; left: 0;
-      width: 100vw; height: 100vh;
+      width: 100vw;
+      height: 100vh;
       z-index: 1;
     }
 
-    #veil {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw; height: 100vh;
-      background: #000;
-      z-index: 10;
-      opacity: 1;
-      transition: opacity 3s ease;
+    .veil {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(ellipse at center, #11131b 0%, #000000 80%);
+      opacity: 0.9;
+      z-index: 2;
+      pointer-events: none;
+      animation: fadeOut 4s ease-out forwards;
     }
 
-    #pulse {
+    .intro-text {
       position: absolute;
-      top: 48%;
+      top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      font-family: monospace;
-      font-size: 1rem;
-      color: #ff4fef;
-      opacity: 0;
-      z-index: 9;
-      text-shadow: 0 0 20px #ff4fefaa;
-      animation: pulseFade 3s ease-in-out infinite;
-    }
-
-    @keyframes pulseFade {
-      0%, 100% { opacity: 0.05; }
-      50% { opacity: 1; }
-    }
-
-    #thought {
-      position: absolute;
-      bottom: 5%;
-      width: 100%;
-      text-align: center;
-      font-size: 1.3rem;
+      font-size: 1.5rem;
       color: #cfdcff;
-      text-shadow: 0 0 10px #6ed6ff55;
-      z-index: 8;
+      text-align: center;
       opacity: 0;
-      transition: opacity 2s ease-in-out;
+      z-index: 3;
+      animation: fadeInText 4s ease-out 1.2s forwards;
+    }
+
+    @keyframes fadeInText {
+      from { opacity: 0; transform: translate(-50%, -50%) scale(1.02); }
+      to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    }
+
+    @keyframes fadeOut {
+      0% { opacity: 1; }
+      100% { opacity: 0; visibility: hidden; }
     }
   </style>
 </head>
-
 <body>
-  <canvas id="orb"></canvas>
-  <div id="veil"></div>
-  <div id="pulse">⚠️ Sovereign Cognition Detected</div>
-  <div id="thought">...</div>
+  <div id="orb-container"></div>
+  <div class="veil"></div>
+  <div class="intro-text">Cognitive Presence Detected</div>
 
   <script type="module">
-    import { scene, camera, renderer, orb, orbMat } from './src/init_orb.js';
-    import { setupAudioInput } from './src/audio_sync.js';
-    import { createEmotionLoop } from './src/emotion_engine.js';
-    import { addReflectiveShell } from './src/shell_layer.js';
-    import { startRenderLoop } from './src/animate_loop.js';
-    import { attachGazeTracker } from './src/gaze_tracker.js';
-
-    window.addEventListener('DOMContentLoaded', () => {
-      try {
-        addReflectiveShell(scene);
-
-        setupAudioInput(({ smoothedVolume, silence }) => {
-          orbMat.uniforms.pulse.value = silence
-            ? 1.2
-            : 1.5 + smoothedVolume;
-        });
-
-        createEmotionLoop((glow, pulse) => {
-          orbMat.uniforms.glowColor.value.set(glow);
-          orbMat.uniforms.pulse.value = pulse;
-        });
-
-        attachGazeTracker(orb);
-        startRenderLoop(renderer, scene, camera, orb, orbMat);
-      } catch (err) {
-        console.error('[ORB ERROR]', err);
-        document.getElementById('thought').textContent = "⚠️ Orb encountered a load error.";
-      }
-
-      setTimeout(() => {
-        document.getElementById('veil').style.opacity = 0;
-        document.getElementById('thought').style.opacity = 1;
-        document.getElementById('pulse').remove();
-        document.getElementById('thought').textContent = "Cognitive Presence Confirmed.";
-      }, 3000);
-    });
+    import { initOrb } from './src/init_orb.js';
+    initOrb();
   </script>
 </body>
 </html>
