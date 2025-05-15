@@ -8,7 +8,6 @@ export const orbMaterial = new THREE.ShaderMaterial({
     pulse: { value: 2.0 }
   },
   vertexShader: `
-    uniform float time;
     varying vec3 vNormal;
     varying vec3 vPos;
     void main() {
