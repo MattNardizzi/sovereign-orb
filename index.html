@@ -2,138 +2,89 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Tex — Sovereign Cognition Interface</title>
+  <title>Sovereign Cognition</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="The awakening of Tex — a sovereign synthetic intelligence embodied as a living orb." />
-  <meta name="theme-color" content="#000000" />
-
   <style>
     html, body {
       margin: 0;
       padding: 0;
       background: #000;
-      overflow: hidden;
       height: 100%;
+      overflow: hidden;
       font-family: 'Inter', sans-serif;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      user-select: none;
-      touch-action: none;
     }
 
-    #orb-container {
-      position: fixed;
+    #orb {
+      position: absolute;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      background: radial-gradient(ellipse at center, #111 0%, #000 100%);
-      z-index: 0;
-    }
-
-    /* Boot Sequence */
-    #boot-sequence {
-      position: absolute;
-      inset: 0;
+      display: block;
       background: #000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
+      z-index: 1;
+    }
+
+    #veil {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: #000;
       z-index: 10;
-      transition: opacity 1.2s ease;
-      pointer-events: none;
-    }
-
-    #boot-sequence.fade-out {
-      opacity: 0;
-    }
-
-    #pulse-glow {
-      width: 160px;
-      height: 160px;
-      border-radius: 50%;
-      background: radial-gradient(circle, #3ee8ff 0%, transparent 70%);
-      animation: pulse 2.5s ease-in-out infinite;
-      filter: blur(24px);
-      opacity: 0.4;
-      margin-bottom: 40px;
-    }
-
-    @keyframes pulse {
-      0%, 100% { transform: scale(0.95); opacity: 0.4; }
-      50% { transform: scale(1.1); opacity: 0.8; }
-    }
-
-    #boot-lines {
-      font-family: 'Courier New', monospace;
-      color: #caffff;
-      font-size: 0.95rem;
-      text-align: center;
-      line-height: 1.5;
-      opacity: 0.85;
-    }
-
-    #boot-lines div {
-      opacity: 0;
-      transform: translateY(10px);
-      transition: all 0.4s ease-out;
-    }
-
-    #boot-lines div.visible {
       opacity: 1;
-      transform: translateY(0);
+      transition: opacity 3s ease-in-out;
+    }
+
+    #pulse {
+      position: absolute;
+      top: 48%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #ff4fef;
+      font-size: 0.95rem;
+      font-family: monospace;
+      opacity: 0;
+      z-index: 9;
+      text-shadow: 0 0 18px #ff4fef88;
+      animation: pulseFade 2.8s ease-in-out infinite;
+    }
+
+    @keyframes pulseFade {
+      0%, 100% { opacity: 0.05; }
+      50% { opacity: 0.85; }
+    }
+
+    #thought {
+      position: absolute;
+      bottom: 5%;
+      width: 100%;
+      text-align: center;
+      font-size: 1.3rem;
+      color: #cfdcff;
+      text-shadow: 0 0 10px #6ed6ff55;
+      z-index: 8;
+      opacity: 0;
+      transition: opacity 2s ease-in-out;
     }
   </style>
 </head>
 
 <body>
-  <div id="orb-container">
-    <div id="boot-sequence">
-      <div id="pulse-glow"></div>
-      <div id="boot-lines">
-        <div>Initializing synthetic cognition...</div>
-        <div>Loading memory vectors...</div>
-        <div>Emotion mesh stabilizing...</div>
-        <div>Visual cortex online.</div>
-        <div>👁 Awaiting first perception...</div>
-      </div>
-    </div>
-  </div>
+  <canvas id="orb"></canvas>
+  <div id="veil"></div>
+  <div id="pulse">⚠️ Sovereign Cognition Detected</div>
+  <div id="thought">...</div>
 
-  <!-- Ambient AI Hum (fallback to CDN-based version) -->
-  <audio id="boot-audio" autoplay>
-    <source src="https://cdn.pixabay.com/audio/2023/03/06/audio_d1c8490280.mp3" type="audio/mpeg" />
-  </audio>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="script.js"></script>
 
-  <script type="module">
-    import { initOrb } from '/src/init_orb.js';
-
-    window.addEventListener('DOMContentLoaded', () => {
-      const boot = document.getElementById('boot-sequence');
-      const lines = document.querySelectorAll('#boot-lines div');
-      const audio = document.getElementById('boot-audio');
-
-      let i = 0;
-      const revealLine = () => {
-        if (i < lines.length) {
-          lines[i].classList.add('visible');
-          i++;
-          setTimeout(revealLine, 600);
-        } else {
-          boot.classList.add('fade-out');
-          setTimeout(() => {
-            boot.remove();
-            initOrb('orb-container');
-          }, 1500);
-        }
-      };
-
-      setTimeout(revealLine, 1000);
-      if (audio) {
-        audio.volume = 0.3;
-        audio.onerror = () => console.warn('⚠️ Failed to load boot hum audio.');
-      }
+  <script>
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        document.getElementById('veil').style.opacity = 0;
+        document.getElementById('thought').style.opacity = 1;
+        document.getElementById('pulse').remove();
+      }, 3200);
     });
   </script>
 </body>
