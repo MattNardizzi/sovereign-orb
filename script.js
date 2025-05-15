@@ -1,7 +1,12 @@
-const orbCanvas = document.getElementById('orb');
+const orb = document.getElementById('orb');
 const thoughtText = document.getElementById('thought');
 
-// Emotion color map
+let lastEmotion = 'neutral';
+let lastThought = 'Initializing...';
+let glowColor = '#6ed6ff';
+let breathRate = 1.7;
+
+// Emotion → glow color map
 const emotionColors = {
   neutral: '#6ed6ff',
   happy: '#a3ffab',
@@ -12,49 +17,69 @@ const emotionColors = {
   mutated: '#ff00ff'
 };
 
-let currentColor = '#6ed6ff';
-let lastThought = 'Initializing Tex...';
-let flickerCounter = 0;
+// Emotion → breath rhythm map (lower is slower)
+const emotionBreaths = {
+  neutral: 1.7,
+  happy: 1.3,
+  focused: 1.1,
+  angry: 2.3,
+  anxious: 2.6,
+  sad: 2.0,
+  mutated: 3.3
+};
 
-// Live update from JSON
-async function fetchThought() {
+// Fetch Tex’s latest thought + emotion
+async function fetchThoughtData() {
   try {
-    const res = await fetch('last_spoken_thought.json?_t=' + Date.now()); // prevent caching
+    const res = await fetch('last_spoken_thought.json?_t=' + Date.now());
     const data = await res.json();
 
     const newThought = data.thought || '...';
-    const emotion = data.emotion || 'neutral';
-    const glowColor = emotionColors[emotion] || emotionColors['neutral'];
+    const newEmotion = data.emotion || 'neutral';
 
-    // Update thought
+    // Thought update
     if (newThought !== lastThought) {
-      thoughtText.textContent = newThought;
       lastThought = newThought;
+      fadeInThought(newThought);
     }
 
-    // Update glow
-    if (glowColor !== currentColor) {
-      orbCanvas.style.boxShadow = `0 0 60px 25px ${glowColor}`;
-      currentColor = glowColor;
+    // Emotion change → update glow + breathing
+    if (newEmotion !== lastEmotion) {
+      lastEmotion = newEmotion;
+      glowColor = emotionColors[newEmotion] || '#6ed6ff';
+      breathRate = emotionBreaths[newEmotion] || 1.7;
+
+      orb.style.boxShadow = `0 0 80px 30px ${glowColor}`;
+      orb.style.filter = `drop-shadow(0 0 24px ${glowColor}55)`;
     }
 
   } catch (err) {
-    console.warn('[Tex] Could not fetch thought:', err);
+    console.warn('[⚠️] Thought fetch failed:', err);
   }
 }
 
-// Micro-jitter animation loop for realism
-function loopTwitch() {
-  const t = Date.now() * 0.002;
-  const flicker = 0.02 * Math.sin(t * 3 + Math.random()) + Math.random() * 0.005;
-  const scale = 1 + flicker;
+// Animate breathing, twitching, drifting
+function animateOrb() {
+  const t = Date.now() / 1000;
 
-  orbCanvas.style.transform = `scale(${scale}) rotate(${(t % 360)}deg)`;
-  orbCanvas.style.filter = `drop-shadow(0 0 12px ${currentColor}88)`;
+  // Breathing rhythm (based on emotion)
+  const scale = 1 + 0.015 * Math.sin(t * breathRate);
+  const rotateY = (t * 0.6) % 360;
+  const microTwitch = Math.sin(t * 17) * 0.003;
 
-  requestAnimationFrame(loopTwitch);
+  orb.style.transform = `scale(${scale}) rotate(${rotateY}deg) translateY(${microTwitch}px)`;
+  requestAnimationFrame(animateOrb);
 }
 
-// Pull cognition every 2 seconds
-setInterval(fetchThought, 2000);
-loopTwitch();
+// Smooth text reveal
+function fadeInThought(text) {
+  thoughtText.style.opacity = 0;
+  setTimeout(() => {
+    thoughtText.textContent = text;
+    thoughtText.style.opacity = 1;
+  }, 300 + Math.random() * 200); // slight async lag = realism
+}
+
+// Loop
+setInterval(fetchThoughtData, 2000);
+animateOrb();
