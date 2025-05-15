@@ -74,9 +74,8 @@
 
   <script type="module">
     import * as THREE from 'https://cdn.skypack.dev/three@0.152.2';
-
-    // 🔗 Audio sync from same repo directory
     import { setupAudioInput } from './audio_sync.js';
+    import { createEmotionLoop } from './emotion_engine.js';
 
     const canvas = document.getElementById('orb');
     const scene = new THREE.Scene();
@@ -91,8 +90,8 @@
     const orbMat = new THREE.ShaderMaterial({
       uniforms: {
         time: { value: 0.0 },
-        glowColor: { value: new THREE.Color('#82e9ff') },
-        coreColor: { value: new THREE.Color('#0d0d22') },
+        glowColor: { value: new THREE.Color('#90f1ff') },  // Brightened default
+        coreColor: { value: new THREE.Color('#111125') },
         pulse: { value: 2.0 }
       },
       vertexShader: `
@@ -132,9 +131,15 @@
     const orb = new THREE.Mesh(orbGeo, orbMat);
     scene.add(orb);
 
-    // 🔊 Connect voice input to pulse strength
+    // 🎙️ Microphone-driven breathing pulse
     setupAudioInput(volume => {
-      orbMat.uniforms.pulse.value = 1.2 + volume;  // Live breathing control
+      orbMat.uniforms.pulse.value = 1.5 + volume;
+    });
+
+    // 🧠 Emotion loop: modulates glow + pulse over time
+    createEmotionLoop((glow, pulse) => {
+      orbMat.uniforms.glowColor.value.set(glow);
+      orbMat.uniforms.pulse.value = pulse;
     });
 
     let drift = 0;
