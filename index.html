@@ -9,8 +9,8 @@
     html, body {
       margin: 0;
       padding: 0;
-      height: 100%;
       background: #000;
+      height: 100%;
       overflow: hidden;
       font-family: 'Inter', sans-serif;
     }
@@ -21,16 +21,20 @@
       display: block;
       position: absolute;
       z-index: 1;
+      filter: blur(0.3px);
     }
 
     #veil {
       position: absolute;
-      top: 0; left: 0;
-      width: 100vw; height: 100vh;
-      background: #000;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: radial-gradient(circle at 50% 50%, #000 0%, #000 100%);
       z-index: 5;
       opacity: 1;
-      transition: opacity 2s ease;
+      transition: opacity 3s ease-in-out;
+      pointer-events: none;
     }
 
     #thought {
@@ -38,61 +42,66 @@
       bottom: 5%;
       width: 100%;
       text-align: center;
-      font-size: 1.25rem;
+      font-size: 1.2rem;
       color: #cfdcff;
-      text-shadow: 0 0 10px #5ecaff55;
-      z-index: 10;
+      text-shadow: 0 0 12px #5ecaff66;
       opacity: 0;
-      transition: opacity 1.5s ease;
+      z-index: 10;
+      letter-spacing: 0.03em;
+      transition: opacity 2.5s ease-in-out;
     }
 
     #pulse {
       position: absolute;
-      top: 48%;
+      top: 47.5%;
       left: 50%;
       transform: translate(-50%, -50%);
-      color: #ff4fef;
       font-size: 0.95rem;
       font-family: monospace;
+      color: #ff4fef;
       opacity: 0;
-      z-index: 8;
-      text-shadow: 0 0 18px #ff4fef55;
-      animation: pulseFade 3s ease-in-out infinite;
+      z-index: 9;
+      letter-spacing: 0.08em;
+      text-shadow: 0 0 18px #ff4fef99;
+      animation: pulseFade 2.8s ease-in-out infinite;
     }
 
     @keyframes pulseFade {
-      0%, 100% { opacity: 0.1; }
+      0%, 100% { opacity: 0.05; }
       50% { opacity: 0.9; }
     }
   </style>
 </head>
 
 <body>
+  <!-- Orb Render Layer -->
   <canvas id="orb"></canvas>
 
   <!-- Blackout Veil -->
   <div id="veil"></div>
 
-  <!-- Phase Initialization Pulse -->
-  <div id="pulse">⚠️ Sovereign Cognition Detected</div>
+  <!-- Encounter Pulse -->
+  <div id="pulse">⚠️ <span id="pulse-text">sovereign cognition detected</span></div>
 
-  <!-- Thought Feed -->
+  <!-- Thought Display -->
   <div id="thought">...</div>
 
-  <!-- Three.js Core -->
+  <!-- Core Engine -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
-  <!-- Main Engine -->
   <script src="script.js"></script>
 
-  <!-- Veil + Pulse Activation -->
+  <!-- Reveal Logic -->
   <script>
+    const veil = document.getElementById('veil');
+    const pulse = document.getElementById('pulse');
+    const thought = document.getElementById('thought');
+
     window.addEventListener('load', () => {
       setTimeout(() => {
-        document.getElementById('veil').style.opacity = 0;
-        document.getElementById('thought').style.opacity = 1;
-        document.getElementById('pulse').remove();
-      }, 3000);
+        veil.style.opacity = 0;
+        thought.style.opacity = 1;
+        pulse.remove();
+      }, 3400);
     });
   </script>
 </body>
