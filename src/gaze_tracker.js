@@ -1,31 +1,27 @@
-let gazeTarget = { x: 0, y: 0 };
-let orbTarget = { x: 0, y: 0 };
+import * as THREE from 'https://cdn.skypack.dev/three@0.152.2';
 
-export function attachGazeTracker(orb) {
-  webgazer.setGazeListener((data, timestamp) => {
-    if (data) {
-      // Normalize gaze position
-      gazeTarget.x = (data.x / window.innerWidth - 0.5);
-      gazeTarget.y = (data.y / window.innerHeight - 0.5);
-    }
-  }).begin();
+let mouse = new THREE.Vector2(0, 0);
+let targetRotation = new THREE.Vector2(0, 0);
+let easing = 0.05; // smoothness of orb movement
 
-  webgazer.showVideo(false).showFaceOverlay(false).showFaceFeedbackBox(false);
+// Call once at startup
+export function enableGazeTracking() {
+  window.addEventListener('mousemove', (event) => {
+    // Normalize mouse position (-1 to +1)
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+  });
+}
 
-  // Apply gaze to orb in animation frame loop
-  const damp = 0.05;
+// Call each frame
+export function updateOrbGaze(orb) {
+  if (!orb) return;
 
-  function updateGaze() {
-    // Smooth toward gaze target
-    orbTarget.x += (gazeTarget.x - orbTarget.x) * damp;
-    orbTarget.y += (gazeTarget.y - orbTarget.y) * damp;
+  // Smooth interpolation to avoid sharp movement
+  targetRotation.x += (mouse.y * 0.25 - targetRotation.x) * easing;
+  targetRotation.y += (mouse.x * 0.25 - targetRotation.y) * easing;
 
-    // Apply subtle rotation
-    orb.rotation.y = orbTarget.x * 0.5;
-    orb.rotation.x = -orbTarget.y * 0.3;
-
-    requestAnimationFrame(updateGaze);
-  }
-
-  updateGaze();
+  // Apply small rotation adjustments (clamped)
+  orb.rotation.x = targetRotation.x;
+  orb.rotation.y = targetRotation.y;
 }
