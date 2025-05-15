@@ -2,16 +2,17 @@ import * as THREE from 'https://cdn.skypack.dev/three@0.152.2';
 
 export const orbMaterial = new THREE.ShaderMaterial({
   uniforms: {
-    time: { value: 0.0 },
-    glowColor: { value: new THREE.Color('#90f1ff') },  // dynamically updated per emotion
-    coreColor: { value: new THREE.Color('#111125') },
-    pulse: { value: 1.0 }, // can be modulated via emotion intensity
-    emotionState: { value: 0.0 }, // 0.0 = calm, 1.0 = fear/high arousal
-    driftFactor: { value: 0.0 }  // subtle random motion
+    time:         { value: 0.0 },
+    glowColor:    { value: new THREE.Color('#90f1ff') },
+    coreColor:    { value: new THREE.Color('#111125') },
+    pulse:        { value: 1.0 },
+    emotionState: { value: 0.0 },
+    driftFactor:  { value: 0.0 }
   },
   vertexShader: `
     varying vec3 vNormal;
     varying vec3 vPos;
+
     void main() {
       vNormal = normalize(normalMatrix * normal);
       vPos = position;
@@ -29,7 +30,6 @@ export const orbMaterial = new THREE.ShaderMaterial({
     varying vec3 vNormal;
     varying vec3 vPos;
 
-    // Coherent noise (fake Perlin)
     float hash(vec2 p) {
       return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
     }
@@ -46,25 +46,41 @@ export const orbMaterial = new THREE.ShaderMaterial({
     }
 
     void main() {
-      // Rim lighting
-      float angle = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 2.5);
+      // Directional rim lighting
+      float rim = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 3.0);
 
-      // Breathing modulation using emotion intensity and non-uniform time drift
-      float breath = 0.4 + 0.3 * noise(vec2(time * 0.15 + driftFactor, vPos.y));
-      float shimmer = noise(vPos.xy * 2.0 + time * 0.2) * 0.07;
+      // Multi-layer breath distortion
+      float breathFreq = mix(0.9, 2.0, emotionState);
+      float breathA = sin(time * 0.2 + vPos.y * 1.5);
+      float breathB = noise(vPos.xy * 3.0 + time * 0.25);
+      float breath = (0.5 + 0.3 * breathA + 0.2 * breathB);
 
-      // Pulse speed and scale change with emotion
-      float pulseMod = mix(0.8, 1.8, emotionState); // fear → fast, calm → slow
-      float pulseWave = sin(time * pulseMod + vPos.y * 1.5) * 0.5 + 0.5;
+      // Subsurface shimmer
+      float shimmer = noise(vPos.xy * 4.0 + time * 0.5 + driftFactor) * 0.06;
 
-      // Interior glow layering
-      float depthCore = smoothstep(0.4, 0.0, length(vPos)) * 0.7;
+      // Pulse wave
+      float pulseWave = sin(time * breathFreq + length(vPos.xy)) * 0.5 + 0.5;
 
-      // Final intensity
-      float intensity = clamp(angle * pulseWave * breath * pulse + shimmer + depthCore, 0.0, 1.0);
-      vec3 color = mix(coreColor, glowColor, intensity);
+      // Inner core modulation
+      float coreFog = smoothstep(1.2, 0.0, length(vPos)) * (0.4 + emotionState * 0.4);
 
-      gl_FragColor = vec4(color, 1.0);
+      // Flicker variation
+      float flicker = 0.02 * sin(dot(vPos.xy, vec2(12.0, 4.0)) + time * 3.0);
+
+      // Final composite intensity
+      float intensity = clamp(
+        rim * pulseWave * breath +
+        shimmer +
+        coreFog +
+        flicker,
+        0.0, 1.0
+      );
+
+      // Slight chromatic shift with emotionState
+      vec3 shift = vec3(0.05 * emotionState, -0.02 * emotionState, 0.03 * emotionState);
+      vec3 finalColor = mix(coreColor, glowColor + shift, intensity);
+
+      gl_FragColor = vec4(finalColor, 1.0);
     }
   `,
   transparent: true,
