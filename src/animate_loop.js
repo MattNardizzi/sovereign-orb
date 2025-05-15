@@ -3,40 +3,44 @@ import { orbMaterial } from './shader_material.js';
 import { getCurrentEmotionIntensity } from './emotion_engine.js';
 import { updateOrbShell } from './shell_layer.js';
 
-let lastFrameTime = performance.now();
+let lastTime = performance.now();
+let lastEmotion = 0;
+let lastPulse = 1.0;
 let driftSeed = Math.random() * 1000;
 
 export function animateOrb(renderer, scene, camera, orb) {
   const now = performance.now();
   const elapsed = now * 0.001;
-  const delta = (now - lastFrameTime) * 0.001;
-  lastFrameTime = now;
+  const delta = (now - lastTime) * 0.001;
+  lastTime = now;
 
-  // Update shader time uniform
-  orbMaterial.uniforms.time.value = elapsed;
+  // 📈 Emotion drive
+  const targetEmotion = getCurrentEmotionIntensity(); // 0.0 - 1.0
+  const smoothedEmotion = lastEmotion + (targetEmotion - lastEmotion) * 0.05;
+  orbMaterial.uniforms.emotionState.value = smoothedEmotion;
+  lastEmotion = smoothedEmotion;
 
-  // Emotion intensity drives pulse and motion
-  const emotion = getCurrentEmotionIntensity(); // Range: 0.0 - 1.0
-  orbMaterial.uniforms.emotionState.value = emotion;
+  // 🫁 Breath modulation (non-periodic, alive)
+  const breathA = Math.sin(elapsed * 0.15 + driftSeed) * 0.1;
+  const breathB = Math.sin(elapsed * 0.07 + driftSeed * 0.5) * 0.05;
+  const breath = 0.45 + breathA + breathB;
 
-  // Pulse breathing (organic, non-looping)
-  const breathNoise = Math.sin(elapsed * 0.15 + driftSeed) * 0.1 +
-                      Math.sin(elapsed * 0.07 + driftSeed * 0.5) * 0.05;
-  const breath = 0.45 + breathNoise;
-  orbMaterial.uniforms.pulse.value = breath * (0.9 + emotion);
+  // 💓 Pulse intensity w/ smoothing
+  const targetPulse = breath * (0.9 + smoothedEmotion);
+  lastPulse += (targetPulse - lastPulse) * 0.1;
+  orbMaterial.uniforms.pulse.value = lastPulse;
 
-  // Subtle drift movement to simulate presence
-  const driftX = Math.sin(elapsed * 0.3 + driftSeed) * 0.0015;
-  const driftY = Math.sin(elapsed * 0.22 + driftSeed * 2.0) * 0.001;
-  orb.rotation.x += driftX;
-  orb.rotation.y += driftY;
+  // 🌪️ Drift — intensity-responsive
+  const intensity = 0.001 + 0.001 * smoothedEmotion;
+  orb.rotation.x += Math.sin(elapsed * 0.3 + driftSeed) * intensity;
+  orb.rotation.y += Math.sin(elapsed * 0.22 + driftSeed * 2.0) * intensity * 0.8;
 
-  // Shader micro-drift
+  // 🌊 Shader drift modulation
   orbMaterial.uniforms.driftFactor.value = Math.sin(elapsed * 0.1 + driftSeed);
 
-  // Apply shell visuals (color, etc.)
+  // 🎨 Apply shell overlays (color, glow)
   updateOrbShell();
 
-  // Final render
+  // 🧠 Render the current cognition state
   renderer.render(scene, camera);
 }
