@@ -30,7 +30,7 @@ function lerpColor(a, b, t) {
 // Live thought + glow sync
 async function fetchThought() {
   try {
-    const res = await fetch('public_data/last_spoken_thought.json?_t=' + Date.now());
+    const res = await fetch('last_spoken_thought.json?_t=' + Date.now());
     const data = await res.json();
 
     const newThought = data.thought || '...';
