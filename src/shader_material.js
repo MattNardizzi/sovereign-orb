@@ -8,7 +8,6 @@ export const orbMaterial = new THREE.ShaderMaterial({
     pulse: { value: 2.0 }
   },
   vertexShader: `
-    uniform float time;
     varying vec3 vNormal;
     varying vec3 vPos;
     void main() {
@@ -25,10 +24,12 @@ export const orbMaterial = new THREE.ShaderMaterial({
     varying vec3 vNormal;
     varying vec3 vPos;
 
+    // Hash for pseudo-random noise
     float hash(vec2 p) {
       return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
     }
 
+    // 2D Perlin-style noise
     float noise(vec2 p) {
       vec2 i = floor(p);
       vec2 f = fract(p);
@@ -43,14 +44,31 @@ export const orbMaterial = new THREE.ShaderMaterial({
     }
 
     void main() {
-      float breathing = sin(time * 0.75 + vPos.y * 1.5) * 0.5 + 0.5;
-      float angle = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 3.0);
-      float shimmer = noise(vPos.xy * 4.0 + time * 0.5) * 0.1;
+      // Core breathing based on vertical position and time
+      float breath = sin(time * 0.8 + vPos.y * 2.0) * 0.5 + 0.5;
 
-      float intensity = clamp(angle * breathing * pulse + shimmer, 0.0, 1.0);
-      vec3 color = mix(coreColor, glowColor, intensity);
+      // Angle-based glow (center → edge)
+      float angle = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 2.5);
 
-      gl_FragColor = vec4(color, 1.0);
+      // Radial core pulse based on position & time
+      float corePulse = sin(length(vPos.xy) * 8.0 - time * 2.0) * 0.3 + 0.7;
+
+      // Deep shimmer using time-based 2D noise
+      float shimmer = noise(vPos.xy * 4.5 + time * 0.2) * 0.08;
+
+      // Surface diffraction
+      float halo = smoothstep(0.0, 1.0, pow(length(vPos.xy), 4.0));
+
+      // Total energy intensity
+      float intensity = clamp(angle * breath * corePulse * pulse + shimmer, 0.0, 1.0);
+
+      vec3 glow = mix(coreColor, glowColor, intensity);
+      glow += halo * 0.1;
+
+      gl_FragColor = vec4(glow, 1.0);
     }
-  `
+  `,
+  transparent: false,
+  depthWrite: true,
+  side: THREE.FrontSide
 });
