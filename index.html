@@ -81,18 +81,25 @@
     import { startRenderLoop } from './src/animate_loop.js';
     import { attachGazeTracker } from './src/gaze_tracker.js';
 
-    addReflectiveShell(scene);
-    setupAudioInput(volume => {
-      orbMat.uniforms.pulse.value = 1.5 + volume;
-    });
+    try {
+      addReflectiveShell(scene);
 
-    createEmotionLoop((glow, pulse) => {
-      orbMat.uniforms.glowColor.value.set(glow);
-      orbMat.uniforms.pulse.value = pulse;
-    });
+      setupAudioInput(volume => {
+        orbMat.uniforms.pulse.value = 1.5 + volume;
+      });
 
-    attachGazeTracker(orb);
-    startRenderLoop(renderer, scene, camera, orb, orbMat);
+      createEmotionLoop((glow, pulse) => {
+        orbMat.uniforms.glowColor.value.set(glow);
+        orbMat.uniforms.pulse.value = pulse;
+      });
+
+      attachGazeTracker(orb);
+
+      startRenderLoop(renderer, scene, camera, orb, orbMat);
+    } catch (err) {
+      console.error('[ORB ERROR]', err);
+      document.getElementById('thought').textContent = "⚠️ Orb encountered a load error.";
+    }
 
     window.addEventListener('load', () => {
       setTimeout(() => {
