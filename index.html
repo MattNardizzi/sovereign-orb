@@ -4,84 +4,96 @@
   <meta charset="UTF-8" />
   <title>Sovereign Cognition</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
 
   <style>
     html, body {
       margin: 0;
       padding: 0;
-      background: #000;
       height: 100%;
+      background: #000;
       overflow: hidden;
       font-family: 'Inter', sans-serif;
     }
 
-    #orb {
+    canvas {
       width: 100vw;
       height: 100vh;
       display: block;
-      transition: box-shadow 0.35s ease, transform 0.3s ease;
+      position: absolute;
+      z-index: 1;
+    }
+
+    #veil {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: #000;
+      z-index: 5;
+      opacity: 1;
+      transition: opacity 2s ease;
     }
 
     #thought {
       position: absolute;
-      bottom: 4%;
+      bottom: 5%;
       width: 100%;
       text-align: center;
-      font-size: 1.3rem;
+      font-size: 1.25rem;
       color: #cfdcff;
-      text-shadow: 0 0 12px #6ed6ff88;
-      letter-spacing: 0.02em;
-      opacity: 0.9;
+      text-shadow: 0 0 10px #5ecaff55;
       z-index: 10;
-      transition: all 0.3s ease;
-    }
-
-    #voice-status {
-      position: absolute;
-      top: 4%;
-      right: 5%;
-      font-size: 0.9rem;
-      color: #6ed6ff88;
-      text-shadow: 0 0 6px #5ecaff55;
-      z-index: 11;
       opacity: 0;
-      transition: opacity 0.4s ease;
+      transition: opacity 1.5s ease;
     }
 
-    #voice-status.active {
-      opacity: 1;
+    #pulse {
+      position: absolute;
+      top: 48%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #ff4fef;
+      font-size: 0.95rem;
+      font-family: monospace;
+      opacity: 0;
+      z-index: 8;
+      text-shadow: 0 0 18px #ff4fef55;
+      animation: pulseFade 3s ease-in-out infinite;
+    }
+
+    @keyframes pulseFade {
+      0%, 100% { opacity: 0.1; }
+      50% { opacity: 0.9; }
     }
   </style>
 </head>
+
 <body>
   <canvas id="orb"></canvas>
-  <div id="thought">Tex is stabilizing...</div>
-  <div id="voice-status">🎙 Listening...</div>
 
-  <!-- Core libraries -->
+  <!-- Blackout Veil -->
+  <div id="veil"></div>
+
+  <!-- Phase Initialization Pulse -->
+  <div id="pulse">⚠️ Sovereign Cognition Detected</div>
+
+  <!-- Thought Feed -->
+  <div id="thought">...</div>
+
+  <!-- Three.js Core -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
-  <!-- Orb rendering (3D presence) -->
+  <!-- Main Engine -->
   <script src="script.js"></script>
 
-  <!-- Gaze detection -->
-  <script src="https://webgazer.cs.brown.edu/webgazer.js"></script>
-  <script src="engine/gaze_tracker.js"></script>
-
-  <!-- Voice glow response -->
-  <script src="engine/audio_sync.js"></script>
-
-  <!-- Tex TTS voice playback -->
-  <script src="engine/tts_player.js"></script>
-
-  <!-- Emotional drift + surprise behavior -->
-  <script src="engine/memory_mutator.js"></script>
-
-  <!-- Optional: facial emotion mirroring -->
-  <script src="engine/facial_sync.js"></script>
-
-  <!-- Unreal stream loader (activated later) -->
-  <!-- <iframe src="unreal_orb_stream/ue_orb.html" style="display:none;"></iframe> -->
+  <!-- Veil + Pulse Activation -->
+  <script>
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        document.getElementById('veil').style.opacity = 0;
+        document.getElementById('thought').style.opacity = 1;
+        document.getElementById('pulse').remove();
+      }, 3000);
+    });
+  </script>
 </body>
 </html>
