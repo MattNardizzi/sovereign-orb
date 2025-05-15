@@ -14,28 +14,15 @@
       font-family: 'Inter', sans-serif;
     }
 
-    canvas#orb {
-      position: fixed;
+    #orb {
+      position: absolute;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
+      display: block;
       z-index: 1;
       background: #000;
-    }
-
-    #thought {
-      position: absolute;
-      bottom: 5%;
-      width: 100%;
-      text-align: center;
-      font-size: 1.25rem;
-      color: #cfdcff;
-      text-shadow: 0 0 10px #6ed6ff88;
-      letter-spacing: 0.03em;
-      opacity: 0;
-      z-index: 10;
-      transition: opacity 2s ease-in-out;
     }
 
     #veil {
@@ -45,16 +32,50 @@
       width: 100vw;
       height: 100vh;
       background: #000;
-      z-index: 9;
+      z-index: 10;
       opacity: 1;
-      transition: opacity 3s ease-in-out;
+      transition: opacity 3s ease;
+    }
+
+    #pulse {
+      position: absolute;
+      top: 48%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #ff4fef;
+      font-size: 0.95rem;
+      font-family: monospace;
+      opacity: 0;
+      z-index: 9;
+      text-shadow: 0 0 18px #ff4fef88;
+      animation: pulseFade 2.8s ease-in-out infinite;
+    }
+
+    @keyframes pulseFade {
+      0%, 100% { opacity: 0.05; }
+      50% { opacity: 0.85; }
+    }
+
+    #thought {
+      position: absolute;
+      bottom: 5%;
+      width: 100%;
+      text-align: center;
+      font-size: 1.3rem;
+      color: #cfdcff;
+      text-shadow: 0 0 10px #6ed6ff55;
+      z-index: 8;
+      opacity: 0;
+      transition: opacity 2s ease-in-out;
     }
   </style>
 </head>
+
 <body>
   <canvas id="orb"></canvas>
   <div id="veil"></div>
-  <div id="thought">initializing...</div>
+  <div id="pulse">⚠️ Sovereign Cognition Detected</div>
+  <div id="thought">...</div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="script.js"></script>
@@ -64,6 +85,7 @@
       setTimeout(() => {
         document.getElementById('veil').style.opacity = 0;
         document.getElementById('thought').style.opacity = 1;
+        document.getElementById('pulse').remove();
       }, 3200);
     });
   </script>
