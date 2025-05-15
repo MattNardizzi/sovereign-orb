@@ -48,19 +48,18 @@ function applyEmotion(state) {
   if (!e) return;
 
   try {
-    if (orbMaterial.uniforms.glowColor?.value?.set) {
-      orbMaterial.uniforms.glowColor.value.set(e.glowColor);
-    }
-
+    orbMaterial.uniforms.glowColor?.value?.set(e.glowColor);
     if (typeof orbMaterial.uniforms.breath?.value === 'number') {
       orbMaterial.uniforms.breath.value += e.breathMod;
     }
-
     if (typeof orbMaterial.uniforms.pulse?.value === 'number') {
       orbMaterial.uniforms.pulse.value += e.pulseMod;
     }
+
+    // Optional: Log transitions for debugging
+    console.log(`🧠 Emotion state updated: ${state}`);
   } catch (err) {
-    console.warn(`⚠️ Emotion state application failed: ${state}`, err);
+    console.warn(`⚠️ Failed to apply emotion state: ${state}`, err);
   }
 }
 
@@ -69,8 +68,9 @@ export function updateEmotion(deltaTime) {
 
   driftTimer += deltaTime;
   if (driftTimer > 12) {
-    const options = Object.keys(EMOTIONS).filter(e => e !== currentEmotion);
-    currentEmotion = options[Math.floor(Math.random() * options.length)];
+    const candidates = Object.keys(EMOTIONS).filter(e => e !== currentEmotion);
+    const next = candidates[Math.floor(Math.random() * candidates.length)];
+    currentEmotion = next;
     driftTimer = 0;
   }
 
