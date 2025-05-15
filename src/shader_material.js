@@ -3,8 +3,8 @@ import * as THREE from 'https://cdn.skypack.dev/three@0.152.2';
 export const orbMaterial = new THREE.ShaderMaterial({
   uniforms: {
     time: { value: 0.0 },
-    glowColor: { value: new THREE.Color('#90f1ff') },
-    coreColor: { value: new THREE.Color('#111125') },
+    glowColor: { value: new THREE.Color('#82e9ff') },
+    coreColor: { value: new THREE.Color('#0d0d22') },
     pulse: { value: 2.0 }
   },
   vertexShader: `
@@ -42,18 +42,19 @@ export const orbMaterial = new THREE.ShaderMaterial({
     }
 
     void main() {
-      float breath = sin(time * 0.6 + vPos.y * 1.2) * 0.5 + 0.5;
-      float angle = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 2.5);
-      float core = 1.0 - length(vPos.xy) * 0.85;
-      float shimmer = noise(vPos.xy * 6.0 + time * 0.25) * 0.07;
+      float breath = sin(time * 0.6 + vPos.y * 1.5) * 0.5 + 0.5;
 
-      float intensity = clamp((angle + core) * breath * pulse + shimmer, 0.0, 1.0);
+      float glowFromNormal = pow(1.0 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 3.0);
+      float glowFromCenter = 1.0 - length(vPos.xy) * 0.75;
+      float shimmer = noise(vPos.xy * 5.0 + time * 0.2) * 0.08;
+
+      float intensity = clamp((glowFromCenter + glowFromNormal) * breath * pulse + shimmer, 0.0, 1.0);
       vec3 color = mix(coreColor, glowColor, intensity);
 
       gl_FragColor = vec4(color, 1.0);
     }
   `,
+  side: THREE.FrontSide,
   transparent: false,
-  depthWrite: true,
-  side: THREE.FrontSide
+  depthWrite: true
 });
