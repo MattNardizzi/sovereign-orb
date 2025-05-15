@@ -1,25 +1,39 @@
 import * as THREE from 'https://cdn.skypack.dev/three@0.152.2';
+import { getEmotion } from './emotion_engine.js';
 
-export function addReflectiveShell(scene) {
-  const shellGeo = new THREE.SphereGeometry(2.05, 128, 128);
-
-  const shellMat = new THREE.MeshPhysicalMaterial({
-    transmission: 1.0,           // Let light pass through
-    transparent: true,
-    opacity: 0.12,
-    roughness: 0.1,              // Micro scratches
-    metalness: 0.4,
-    reflectivity: 0.9,           // High surface reflection
-    thickness: 1.2,              // Optical depth through shell
-    clearcoat: 1.0,              // Add specular highlights
+export function createShellLayer() {
+  const geometry = new THREE.SphereGeometry(0.82, 128, 128);
+  const material = new THREE.MeshPhysicalMaterial({
+    color: 0xffffff,
+    metalness: 0.0,
+    roughness: 0.1,
+    transmission: 1.0,
+    thickness: 0.05,
+    clearcoat: 1.0,
     clearcoatRoughness: 0.05,
-    ior: 1.45,                   // Index of refraction (like glass/plasma)
-    sheen: 0.3,                  // Subtle light scattering
-    sheenColor: new THREE.Color('#88aaff'),
-    color: new THREE.Color('#0e0e1a').convertSRGBToLinear()
+    reflectivity: 0.9,
+    envMapIntensity: 1.0,
+    ior: 1.4,
+    transparent: true,
+    opacity: 0.18,
+    side: THREE.FrontSide
   });
 
-  const shell = new THREE.Mesh(shellGeo, shellMat);
-  shell.renderOrder = 1;
-  scene.add(shell);
+  const mesh = new THREE.Mesh(geometry, material);
+
+  mesh.onBeforeRender = () => {
+    const emotion = getEmotion?.() || 'calm';
+    const shift = {
+      calm: 0.2,
+      fear: 0.9,
+      awe: 0.6,
+      melancholy: 0.3,
+      alert: 0.7
+    }[emotion] || 0.4;
+    material.opacity = 0.12 + shift * 0.2;
+    material.clearcoatRoughness = 0.03 + shift * 0.1;
+    material.transmission = 0.9 + Math.sin(performance.now() * 0.001 + shift) * 0.1;
+  };
+
+  return mesh;
 }
