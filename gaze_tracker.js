@@ -1,9 +1,10 @@
 let userIsLooking = false;
 
 const orb = document.getElementById('orb');
+const thought = document.getElementById('thought');
 
-// OBVIOUS glow states
-const glowWhenWatched = '0 0 140px 50px #aaff55';
+// Glow states
+const glowWhenWatched = '0 0 180px 60px #afff4b';
 const glowIdle = '0 0 60px 20px #6ed6ff';
 
 function startGazeTracking() {
@@ -23,7 +24,15 @@ function startGazeTracking() {
 
     if (lookingAtOrb !== userIsLooking) {
       userIsLooking = lookingAtOrb;
+
       orb.style.boxShadow = userIsLooking ? glowWhenWatched : glowIdle;
+
+      // Add a visual confirmation text pulse
+      if (userIsLooking) {
+        thought.textContent = "👁 I see you.";
+      } else {
+        thought.textContent = "Tex is waiting...";
+      }
     }
   }).begin();
 }
