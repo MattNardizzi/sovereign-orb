@@ -30,31 +30,34 @@ const EMOTIONS = {
 
 let currentEmotion = 'calm';
 let driftTimer = 0;
+let shaderReady = false;
+
+export function markShaderReady() {
+  shaderReady = true;
+}
 
 function applyEmotion(state) {
+  if (!shaderReady) return;
   const e = EMOTIONS[state];
-  if (!e || !orbMaterial || !orbMaterial.uniforms) return;
+  if (!e) return;
 
   try {
-    if (orbMaterial.uniforms.glowColor?.value?.set) {
-      orbMaterial.uniforms.glowColor.value.set(e.glowColor);
-    }
-
-    if (typeof orbMaterial.uniforms.breath?.value === 'number') {
+    orbMaterial?.uniforms?.glowColor?.value?.set?.(e.glowColor);
+    if (typeof orbMaterial?.uniforms?.breath?.value === 'number') {
       orbMaterial.uniforms.breath.value += e.breathMod;
     }
-
-    if (typeof orbMaterial.uniforms.pulse?.value === 'number') {
+    if (typeof orbMaterial?.uniforms?.pulse?.value === 'number') {
       orbMaterial.uniforms.pulse.value += e.pulseMod;
     }
   } catch (err) {
-    console.warn('⚠️ Emotion engine failed to apply state:', err);
+    console.warn('⚠️ Emotion engine failed silently:', err);
   }
 }
 
 export function updateEmotion(deltaTime) {
-  driftTimer += deltaTime;
+  if (!shaderReady) return;
 
+  driftTimer += deltaTime;
   if (driftTimer > 15) {
     const keys = Object.keys(EMOTIONS).filter(e => e !== currentEmotion);
     currentEmotion = keys[Math.floor(Math.random() * keys.length)];
@@ -65,6 +68,7 @@ export function updateEmotion(deltaTime) {
 }
 
 export function setEmotion(state) {
+  if (!shaderReady) return;
   if (EMOTIONS[state]) {
     currentEmotion = state;
     driftTimer = 0;
