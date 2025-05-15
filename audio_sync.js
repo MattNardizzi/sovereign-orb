@@ -14,16 +14,17 @@ function setupAudioGlow() {
       analyser.fftSize = 256;
 
       const dataArray = new Uint8Array(analyser.frequencyBinCount);
-      
+
       function pulse() {
         analyser.getByteFrequencyData(dataArray);
         const volume = dataArray.reduce((a, b) => a + b) / dataArray.length;
 
-        const intensity = Math.min(volume / 150, 1.0);
-        const glowSize = 20 + intensity * 50;
-        const scale = 1 + intensity * 0.1;
+        const intensity = Math.min(volume / 100, 1.5); // BOOSTED
 
-        orb.style.boxShadow = `0 0 ${glowSize}px ${glowSize / 1.5}px #6ed6ff`;
+        const glowSize = 30 + intensity * 100;         // 💥 LARGER GLOW
+        const scale = 1 + intensity * 0.2;             // 💥 BIGGER EXPANSION
+
+        orb.style.boxShadow = `0 0 ${glowSize}px ${glowSize / 1.3}px #00e1ff`;
         orb.style.transform = `scale(${scale})`;
 
         requestAnimationFrame(pulse);
