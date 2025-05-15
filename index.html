@@ -101,9 +101,9 @@
     </div>
   </div>
 
-  <!-- Ambient AI Hum -->
+  <!-- Ambient AI Hum (fallback to CDN-based version) -->
   <audio id="boot-audio" autoplay>
-    <source src="/assets/boot_hum.mp3" type="audio/mpeg" />
+    <source src="https://cdn.pixabay.com/audio/2023/03/06/audio_d1c8490280.mp3" type="audio/mpeg" />
   </audio>
 
   <script type="module">
@@ -130,7 +130,10 @@
       };
 
       setTimeout(revealLine, 1000);
-      if (audio) audio.volume = 0.3;
+      if (audio) {
+        audio.volume = 0.3;
+        audio.onerror = () => console.warn('⚠️ Failed to load boot hum audio.');
+      }
     });
   </script>
 </body>
