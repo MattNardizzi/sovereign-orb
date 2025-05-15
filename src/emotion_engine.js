@@ -1,19 +1,24 @@
 import { orbMaterial } from './shader_material.js';
 
 const EMOTIONS = {
-  calm:       { glowColor: '#3ee8ff', pulseMod: 0.3, breathMod: 0.3 },
-  awe:        { glowColor: '#ffffff', pulseMod: 0.6, breathMod: 0.4 },
-  alert:      { glowColor: '#ffff66', pulseMod: 0.9, breathMod: 0.45 },
-  melancholy: { glowColor: '#305878', pulseMod: 0.25, breathMod: 0.2 },
-  fear:       { glowColor: '#ff4560', pulseMod: 1.2, breathMod: 0.6 }
+  calm:       { glowColor: '#00ffff', pulseMod: 0.3, breathMod: 0.3 },
+  anxious:    { glowColor: '#ff6600', pulseMod: 1.3, breathMod: 0.8 },
+  excited:    { glowColor: '#ff00ff', pulseMod: 1.6, breathMod: 0.7 },
+  happy:      { glowColor: '#33ff00', pulseMod: 1.0, breathMod: 0.5 },
+  sad:        { glowColor: '#0033cc', pulseMod: 0.4, breathMod: 0.2 },
+  confident:  { glowColor: '#ffff00', pulseMod: 1.1, breathMod: 0.4 },
+  awe:        { glowColor: '#8000ff', pulseMod: 0.8, breathMod: 0.5 },
+  alert:      { glowColor: '#ffffff', pulseMod: 1.2, breathMod: 0.5 },
+  melancholy: { glowColor: '#4455aa', pulseMod: 0.2, breathMod: 0.15 },
+  fear:       { glowColor: '#ff0033', pulseMod: 1.5, breathMod: 0.6 }
 };
 
 let currentEmotion = 'calm';
 let shaderReady = false;
 let driftTimer = 0;
-let emotionWeights = { calm: 1, awe: 0.8, alert: 0.6, melancholy: 0.5, fear: 0.4 };
 
-let pulseHistory = [];
+// Weight tracking — how likely we are to drift into each state
+let emotionWeights = Object.fromEntries(Object.keys(EMOTIONS).map(e => [e, e === 'calm' ? 1 : 0.5]));
 
 export function markShaderReady() {
   shaderReady = true;
@@ -24,10 +29,9 @@ export function getEmotion() {
 }
 
 export function setEmotion(emotion) {
-  if (EMOTIONS[emotion]) {
-    currentEmotion = emotion;
-    decayOtherWeights(emotion);
-  }
+  if (!EMOTIONS[emotion]) return;
+  currentEmotion = emotion;
+  decayOtherWeights(emotion);
 }
 
 export function updateEmotion(deltaTime) {
@@ -37,53 +41,50 @@ export function updateEmotion(deltaTime) {
   decayWeights();
 
   if (driftTimer > 12) {
-    const weightedNext = chooseNextEmotion();
-    currentEmotion = weightedNext;
+    currentEmotion = chooseNextEmotion();
     driftTimer = 0;
   }
 
   applyEmotion(currentEmotion);
 }
 
-function applyEmotion(emotion) {
-  if (!orbMaterial?.uniforms) return;
+function applyEmotion(state) {
+  const e = EMOTIONS[state];
+  if (!e || !orbMaterial?.uniforms?.glowColor?.value) return;
 
-  const e = EMOTIONS[emotion];
   try {
     orbMaterial.uniforms.glowColor.value.set(e.glowColor);
     orbMaterial.uniforms.pulse.value += e.pulseMod;
   } catch (err) {
-    console.warn(`⚠️ applyEmotion() failed`, err);
+    console.warn(`⚠️ Emotion apply failed for: ${state}`, err);
   }
 }
 
 function decayWeights() {
   for (let key in emotionWeights) {
     if (key !== currentEmotion) {
-      emotionWeights[key] = Math.max(0.1, emotionWeights[key] * 0.98);
+      emotionWeights[key] = Math.max(0.1, emotionWeights[key] * 0.975);
     }
   }
-  emotionWeights[currentEmotion] = Math.min(1.5, emotionWeights[currentEmotion] + 0.01);
+  emotionWeights[currentEmotion] = Math.min(1.5, emotionWeights[currentEmotion] + 0.015);
 }
 
-function decayOtherWeights(except) {
+function decayOtherWeights(exception) {
   for (let key in emotionWeights) {
-    if (key !== except) {
+    if (key !== exception) {
       emotionWeights[key] *= 0.5;
     }
   }
-  emotionWeights[except] = 1.0;
+  emotionWeights[exception] = 1.0;
 }
 
 function chooseNextEmotion() {
-  const keys = Object.keys(EMOTIONS);
-  const weightedPool = [];
-
-  for (let key of keys) {
+  const pool = [];
+  for (let key in emotionWeights) {
     const weight = emotionWeights[key];
-    const count = Math.floor(weight * 10);
-    for (let i = 0; i < count; i++) weightedPool.push(key);
+    for (let i = 0; i < Math.floor(weight * 10); i++) {
+      pool.push(key);
+    }
   }
-
-  return weightedPool[Math.floor(Math.random() * weightedPool.length)];
+  return pool[Math.floor(Math.random() * pool.length)];
 }
