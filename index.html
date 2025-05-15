@@ -16,6 +16,7 @@
       width: 100vw;
       height: 100vh;
       display: block;
+      transition: box-shadow 0.3s ease;
     }
 
     #thought {
@@ -38,7 +39,7 @@
   <!-- Core libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
-  <!-- Orb animation logic (inlined for now, can be split later) -->
+  <!-- Orb rendering logic -->
   <script>
     const canvas = document.getElementById('orb');
     const scene = new THREE.Scene();
@@ -74,7 +75,6 @@
     scene.add(light2);
 
     camera.position.z = 6;
-
     const clock = new THREE.Clock();
 
     function animate() {
@@ -101,7 +101,11 @@
     });
   </script>
 
-  <!-- ✅ Add this line to connect your cognition updater -->
+  <!-- ✅ Cognition + Emotion Engine -->
   <script src="script.js"></script>
+
+  <!-- ✅ Gaze Tracking Integration -->
+  <script src="https://webgazer.cs.brown.edu/webgazer.js"></script>
+  <script src="gaze_tracker.js"></script>
 </body>
 </html>
