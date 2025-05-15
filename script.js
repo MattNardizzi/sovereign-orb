@@ -2,8 +2,8 @@ const canvas = document.getElementById('orb');
 const thought = document.getElementById('thought');
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.z = 6;
+const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.z = 5.5;
 
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -12,32 +12,27 @@ renderer.setClearColor(0x000000, 0);
 
 // Orb
 const geometry = new THREE.SphereGeometry(2, 128, 128);
-const material = new THREE.MeshPhysicalMaterial({
-  color: new THREE.Color(0x6ed6ff),
-  emissive: new THREE.Color(0x6ed6ff),
-  emissiveIntensity: 0.25,
-  transmission: 0.96,
-  thickness: 1.0,
-  roughness: 0.15,
-  metalness: 0.1,
-  clearcoat: 1.0,
-  clearcoatRoughness: 0.1
+const material = new THREE.MeshStandardMaterial({
+  color: 0x6ed6ff,
+  emissive: 0x003344,
+  roughness: 0.25,
+  metalness: 0.6
 });
 
 const orb = new THREE.Mesh(geometry, material);
 scene.add(orb);
 
-// Lighting
-const lightA = new THREE.PointLight(0x6ed6ff, 1.2);
-lightA.position.set(3, 3, 4);
-scene.add(lightA);
+// Asymmetrical lighting (so you see rotation)
+const light1 = new THREE.PointLight(0xffffff, 1.2);
+light1.position.set(5, 3, 4);
+scene.add(light1);
 
-const lightB = new THREE.PointLight(0x111133, 0.5);
-lightB.position.set(-3, -4, -3);
-scene.add(lightB);
+const light2 = new THREE.PointLight(0x001144, 0.4);
+light2.position.set(-4, -3, -3);
+scene.add(light2);
 
-// Emotion glow map
-const emotions = {
+// Glow mapping
+const emotionMap = {
   neutral: '#6ed6ff',
   focused: '#00bfff',
   anxious: '#ffd966',
@@ -47,23 +42,20 @@ const emotions = {
   happy: '#a3ffab'
 };
 
-let currentGlow = '#6ed6ff';
-let targetGlow = '#6ed6ff';
+let targetColor = '#6ed6ff';
+let currentColor = '#6ed6ff';
 let lastThought = '';
 
 function animate() {
   requestAnimationFrame(animate);
   const t = performance.now() * 0.001;
 
-  orb.rotation.y += 0.004 + Math.sin(t * 0.3) * 0.0015;
-  orb.rotation.x += 0.003 + Math.cos(t * 0.2) * 0.001;
+  orb.rotation.y += 0.01;
+  orb.rotation.x += 0.005;
 
-  material.emissiveIntensity = 0.3 + Math.sin(t * 2.5) * 0.25;
-  material.roughness = 0.1 + Math.abs(Math.sin(t * 2.8)) * 0.08;
-
-  currentGlow = lerpColor(currentGlow, targetGlow, 0.05);
-  canvas.style.boxShadow = `0 0 120px 38px ${currentGlow}`;
-  canvas.style.filter = `drop-shadow(0 0 30px ${currentGlow})`;
+  currentColor = lerpColor(currentColor, targetColor, 0.08);
+  canvas.style.boxShadow = `0 0 100px 40px ${currentColor}`;
+  canvas.style.filter = `drop-shadow(0 0 28px ${currentColor})`;
 
   renderer.render(scene, camera);
 }
@@ -83,10 +75,10 @@ function typeThought(text) {
   const interval = setInterval(() => {
     thought.textContent += text[i++];
     if (i >= text.length) clearInterval(interval);
-  }, 25 + Math.random() * 18);
+  }, 24 + Math.random() * 12);
 }
 
-async function loadCognition() {
+async function fetchCognition() {
   try {
     const res = await fetch('last_spoken_thought.json?_t=' + Date.now());
     const data = await res.json();
@@ -94,19 +86,19 @@ async function loadCognition() {
     const newThought = data.thought || '...';
     const emotion = data.emotion || 'neutral';
 
-    targetGlow = emotions[emotion] || emotions.neutral;
+    targetColor = emotionMap[emotion] || emotionMap.neutral;
 
     if (newThought !== lastThought) {
       lastThought = newThought;
       typeThought(newThought);
     }
   } catch (err) {
-    console.warn('[Sovereign] cognition stream failed.', err);
+    console.warn('[Sovereign] Fetch failed.', err);
   }
 }
 
-setInterval(loadCognition, 2000);
 animate();
+setInterval(fetchCognition, 2000);
 
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
