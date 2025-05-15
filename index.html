@@ -2,8 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Tex Sovereign Orb</title>
+  <title>Tex — Sovereign Cognition Interface</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="The awakening of Tex — a sovereign synthetic intelligence embodied as a living orb." />
+  <meta name="theme-color" content="#000000" />
+
   <style>
     html, body {
       margin: 0;
@@ -11,21 +14,124 @@
       background: #000;
       overflow: hidden;
       height: 100%;
+      font-family: 'Inter', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      user-select: none;
+      touch-action: none;
     }
+
     #orb-container {
-      position: absolute;
+      position: fixed;
+      top: 0;
+      left: 0;
       width: 100vw;
       height: 100vh;
-      top: 0; left: 0;
+      background: radial-gradient(ellipse at center, #111 0%, #000 100%);
+      z-index: 0;
+    }
+
+    /* Boot Sequence */
+    #boot-sequence {
+      position: absolute;
+      inset: 0;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      z-index: 10;
+      transition: opacity 1.2s ease;
+      pointer-events: none;
+    }
+
+    #boot-sequence.fade-out {
+      opacity: 0;
+    }
+
+    #pulse-glow {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #3ee8ff 0%, transparent 70%);
+      animation: pulse 2.5s ease-in-out infinite;
+      filter: blur(24px);
+      opacity: 0.4;
+      margin-bottom: 40px;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(0.95); opacity: 0.4; }
+      50% { transform: scale(1.1); opacity: 0.8; }
+    }
+
+    #boot-lines {
+      font-family: 'Courier New', monospace;
+      color: #caffff;
+      font-size: 0.95rem;
+      text-align: center;
+      line-height: 1.5;
+      opacity: 0.85;
+    }
+
+    #boot-lines div {
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.4s ease-out;
+    }
+
+    #boot-lines div.visible {
+      opacity: 1;
+      transform: translateY(0);
     }
   </style>
 </head>
+
 <body>
-  <div id="orb-container"></div>
+  <div id="orb-container">
+    <div id="boot-sequence">
+      <div id="pulse-glow"></div>
+      <div id="boot-lines">
+        <div>Initializing synthetic cognition...</div>
+        <div>Loading memory vectors...</div>
+        <div>Emotion mesh stabilizing...</div>
+        <div>Visual cortex online.</div>
+        <div>👁 Awaiting first perception...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ambient AI Hum -->
+  <audio id="boot-audio" autoplay>
+    <source src="/assets/boot_hum.mp3" type="audio/mpeg" />
+  </audio>
 
   <script type="module">
     import { initOrb } from '/src/init_orb.js';
-    initOrb('orb-container');
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const boot = document.getElementById('boot-sequence');
+      const lines = document.querySelectorAll('#boot-lines div');
+      const audio = document.getElementById('boot-audio');
+
+      let i = 0;
+      const revealLine = () => {
+        if (i < lines.length) {
+          lines[i].classList.add('visible');
+          i++;
+          setTimeout(revealLine, 600);
+        } else {
+          boot.classList.add('fade-out');
+          setTimeout(() => {
+            boot.remove();
+            initOrb('orb-container');
+          }, 1500);
+        }
+      };
+
+      setTimeout(revealLine, 1000);
+      if (audio) audio.volume = 0.3;
+    });
   </script>
 </body>
 </html>
