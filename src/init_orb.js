@@ -4,12 +4,19 @@ import { animateOrb } from './animate_loop.js';
 import { updateEmotion } from './emotion_engine.js';
 
 let scene, camera, renderer, orbMesh;
-let clock = new THREE.Clock();
+const clock = new THREE.Clock();
 
 export function initOrb(containerId = 'orb-container') {
   const container = document.getElementById(containerId);
 
-  // Renderer
+  if (!container) {
+    console.error('❌ Container not found:', containerId);
+    return;
+  }
+
+  console.log('✅ Initializing Orb Scene');
+
+  // Renderer setup
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(window.devicePixelRatio);
@@ -22,35 +29,40 @@ export function initOrb(containerId = 'orb-container') {
   camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
   camera.position.z = 2;
 
-  // Orb geometry
+  // Geometry
   const geometry = new THREE.SphereGeometry(0.8, 128, 128);
-  orbMesh = new THREE.Mesh(geometry, orbMaterial);
+
+  // 🔧 Use fallback test material to confirm rendering works
+  // Comment this out later to re-enable shaderMaterial
+  const fallbackMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: false });
+
+  orbMesh = new THREE.Mesh(geometry, fallbackMaterial); // Use orbMaterial here when confirmed working
   scene.add(orbMesh);
+  console.log('✅ Orb mesh added to scene');
 
-  // Lighting (ambient + subtle directional)
+  // Lighting
   const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-  scene.add(ambient);
-
   const dir = new THREE.DirectionalLight(0xaaaaff, 0.3);
   dir.position.set(2, 2, 3);
+  scene.add(ambient);
   scene.add(dir);
 
-  // Resize handling
+  // Responsive resize
   window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
   });
 
-  // Start animation
+  // Animation loop
   function loop() {
     requestAnimationFrame(loop);
 
     const delta = clock.getDelta();
     updateEmotion(delta);
-
     animateOrb(renderer, scene, camera);
   }
 
+  console.log('🎥 Starting animation loop...');
   loop();
 }
