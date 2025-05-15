@@ -75,6 +75,9 @@
   <script type="module">
     import * as THREE from 'https://cdn.skypack.dev/three@0.152.2';
 
+    // 🔗 Audio sync from same repo directory
+    import { setupAudioInput } from './audio_sync.js';
+
     const canvas = document.getElementById('orb');
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -129,6 +132,11 @@
     const orb = new THREE.Mesh(orbGeo, orbMat);
     scene.add(orb);
 
+    // 🔊 Connect voice input to pulse strength
+    setupAudioInput(volume => {
+      orbMat.uniforms.pulse.value = 1.2 + volume;  // Live breathing control
+    });
+
     let drift = 0;
     function animate(t) {
       const time = t * 0.001;
@@ -151,7 +159,6 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
-    // Sovereign intro sequence
     window.addEventListener('load', () => {
       setTimeout(() => {
         document.getElementById('veil').style.opacity = 0;
