@@ -35,7 +35,10 @@
   <canvas id="orb"></canvas>
   <div id="thought">Initializing Tex's cognition...</div>
 
+  <!-- Core libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <!-- Orb animation logic (inlined for now, can be split later) -->
   <script>
     const canvas = document.getElementById('orb');
     const scene = new THREE.Scene();
@@ -45,15 +48,13 @@
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
 
-    // Geometry
     const geometry = new THREE.SphereGeometry(2, 128, 128);
 
-    // Material: translucent layered depth
     const material = new THREE.MeshPhysicalMaterial({
       color: new THREE.Color(0x6ed6ff),
       emissive: new THREE.Color(0x6ed6ff),
       emissiveIntensity: 0.3,
-      transmission: 0.6, // fake inner glow
+      transmission: 0.6,
       thickness: 0.9,
       roughness: 0.2,
       metalness: 0.1,
@@ -64,7 +65,6 @@
     const orb = new THREE.Mesh(geometry, material);
     scene.add(orb);
 
-    // Lighting
     const light1 = new THREE.PointLight(0x6ed6ff, 0.8);
     light1.position.set(5, 5, 5);
     scene.add(light1);
@@ -75,21 +75,18 @@
 
     camera.position.z = 6;
 
-    let clock = new THREE.Clock();
+    const clock = new THREE.Clock();
 
     function animate() {
       requestAnimationFrame(animate);
       const t = clock.getElapsedTime();
 
-      // Rotational drift
       orb.rotation.y += 0.001 + Math.sin(t * 0.25) * 0.0005;
       orb.rotation.x += 0.0006 + Math.cos(t * 0.33) * 0.0003;
 
-      // Glow breathing — more organic
       const pulse = 0.35 + Math.sin(t * 1.7 + Math.sin(t * 0.5)) * 0.25;
       material.emissiveIntensity = pulse;
 
-      // Shimmer via roughness flicker
       material.roughness = 0.1 + Math.abs(Math.sin(t * 2.5)) * 0.1;
 
       renderer.render(scene, camera);
@@ -103,5 +100,8 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
   </script>
+
+  <!-- ✅ Add this line to connect your cognition updater -->
+  <script src="script.js"></script>
 </body>
 </html>
